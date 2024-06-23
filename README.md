@@ -25,7 +25,40 @@ Starknetid.go is an unofficial Go library to interact with the [Starknet.id](htt
 
 ## Getting Started
 
-Coming soon...
+**Step 1**: Install the module
+
+```bash
+go get github.com/metacube-games/starknetid.go
+```
+
+**Step 2**: Initialize the StarknetId provider
+
+```go
+// 1. Create a new RPC provider client
+client, err := rpc.NewProvider(RPC_URL)
+if err != nil {
+  panic(err)
+}
+
+// 2. Create a new Starknet.id provider
+provider, err := provider.NewProvider(client, constants.SN_MAIN, nil)
+if err != nil {
+  panic(err)
+}
+```
+
+**Step 3**: Use the provider to interact with the Starknet.id protocol
+
+```go
+// Example: Get address from Stark name
+address, err := provider.GetAddressFromStarkName(context.Background(), `metacube.stark`)
+if err != nil {
+  panic(err)
+}
+println("Address of metacube.stark:", address)
+```
+
+Please refer to the [examples](examples/main.go) for more usage examples.
 
 ## Features
 
