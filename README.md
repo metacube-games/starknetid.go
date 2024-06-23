@@ -23,6 +23,8 @@
 
 Starknetid.go is an unofficial Go library to interact with the [Starknet.id](https://starknet.id/) protocol. The implementation is based on the official Javascript library [Starknetid.js](https://github.com/starknet-id/starknetid.js).
 
+Starknetid.go is powered by [Starknet.go](https://github.com/NethermindEth/starknet.go).
+
 ## Getting Started
 
 **Step 1**: Install the module
@@ -35,7 +37,7 @@ go get github.com/metacube-games/starknetid.go
 
 ```go
 // 1. Create a new RPC provider client
-client, err := rpc.NewProvider(RPC_URL)
+client, err := rpc.NewProvider(RPC_URL) // github.com/NethermindEth/starknet.go/rpc
 if err != nil {
   panic(err)
 }
@@ -79,3 +81,14 @@ The library is still in development and not all features are implemented yet
 | `GetPfpVerifierData` | ❌ |
 | `GetProfileData` | ❌ |
 | `GetStarkProfiles` | ❌ |
+
+## Contributors
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
