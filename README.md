@@ -87,6 +87,13 @@ The library is still in development and not all features are implemented yet
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/BastienFaivre"><img src="https://avatars.githubusercontent.com/u/57015770?v=4?s=100" width="100px;" alt="Bastien Faivre"/><br /><sub><b>Bastien Faivre</b></sub></a><br /><a href="#code-BastienFaivre" title="Code">💻</a> <a href="#doc-BastienFaivre" title="Documentation">📖</a> <a href="#example-BastienFaivre" title="Examples">💡</a> <a href="#maintenance-BastienFaivre" title="Maintenance">🚧</a> <a href="#test-BastienFaivre" title="Tests">⚠️</a></td>
+    </tr>
+  </tbody>
+</table>
 
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
