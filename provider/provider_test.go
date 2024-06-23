@@ -66,7 +66,6 @@ func TestGetAddressFromStarkName(t *testing.T) {
 	address, err := p.GetAddressFromStarkName(
 		context.Background(),
 		METACUBE_DOMAIN,
-		nil,
 	)
 	if err != nil {
 		t.Error(err)
@@ -89,7 +88,6 @@ func TestGetStarkName(t *testing.T) {
 	starkName, err := p.GetStarkName(
 		context.Background(),
 		METACUBE_ADDRESS,
-		nil,
 	)
 	if err != nil {
 		t.Error(err)
@@ -108,7 +106,6 @@ func TestGetStarknetId(t *testing.T) {
 	starknetId, err := p.GetStarknetId(
 		context.Background(),
 		METACUBE_DOMAIN,
-		nil,
 	)
 	if err != nil {
 		t.Error(err)

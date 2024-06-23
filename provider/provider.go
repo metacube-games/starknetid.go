@@ -9,6 +9,7 @@ import (
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/starknet.go/rpc"
 	NethermindEthUtils "github.com/NethermindEth/starknet.go/utils"
+	"github.com/metacube-games/starknetid.go/constants"
 	"github.com/metacube-games/starknetid.go/types"
 	"github.com/metacube-games/starknetid.go/utils"
 )
@@ -67,7 +68,6 @@ func NewProvider(
 func (p *Provider) GetAddressFromStarkName(
 	ctx context.Context,
 	domain string,
-	blockId *rpc.BlockID,
 ) (string, error) {
 	var contract string
 	var err error
@@ -95,20 +95,13 @@ func (p *Provider) GetAddressFromStarkName(
 	}
 
 	// TODO implement retry with URI and hints from error message if needed
-	return p.tryResolveDomain(
-		ctx,
-		contract,
-		encodedDomain,
-		[]*felt.Felt{},
-		blockId,
-	)
+	return p.tryResolveDomain(ctx, contract, encodedDomain, []*felt.Felt{})
 }
 
 // GetStarkName returns the .stark domain for a given address.
 func (p *Provider) GetStarkName(
 	ctx context.Context,
 	address string,
-	blockId *rpc.BlockID,
 ) (string, error) {
 	var contract string
 	var err error
@@ -131,25 +124,23 @@ func (p *Provider) GetStarkName(
 	}
 
 	// TODO implement retry with URI and hints from error message if needed
-	return p.tryResolveAddress(ctx, contract, address, []*felt.Felt{}, blockId)
+	return p.tryResolveAddress(ctx, contract, address, []*felt.Felt{})
 }
 
-// GetStarkNames returns the .stark domains for a given list of addresses.
-func (p *Provider) GetStarkNames(
-	ctx context.Context,
-	addresses []string,
-	multicallContract string,
-	blockId *rpc.BlockID,
-) ([]string, error) {
-	// TODO implement
-	return nil, fmt.Errorf("not implemented")
-}
+// // GetStarkNames returns the .stark domains for a given list of addresses.
+// func (p *Provider) GetStarkNames(
+// 	ctx context.Context,
+// 	addresses []string,
+// 	multicallContract string,
+// ) ([]string, error) {
+// 	// TODO implement
+// 	return nil, fmt.Errorf("not implemented")
+// }
 
 // GetStarknetId returns the Starknet ID for a given .stark domain.
 func (p *Provider) GetStarknetId(
 	ctx context.Context,
 	domain string,
-	blockId *rpc.BlockID,
 ) (string, error) {
 	var contract string
 	var err error
@@ -192,11 +183,7 @@ func (p *Provider) GetStarknetId(
 		Calldata: utils.FmtFeltArrayCallData(encodedDomain),
 	}
 
-	if blockId == nil {
-		blockId = &rpc.BlockID{Tag: "latest"}
-	}
-
-	result, rpcErr := p.Client.Call(ctx, tx, *blockId)
+	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
 	if rpcErr != nil {
 		return "", fmt.Errorf("failed to call contract: %w", rpcErr)
 	}
@@ -208,189 +195,176 @@ func (p *Provider) GetStarknetId(
 	return result[0].Text(10), nil
 }
 
-// GetUserData returns the user data for a given Starknet ID, domain or address.
-func (p *Provider) GetUserData(
-	ctx context.Context,
-	idDomainOrAddr string,
-	field string,
-	blockId *rpc.BlockID,
-) (string, error) {
-	// TODO implementation not working yet
-	return "", fmt.Errorf("not implemented")
+// // GetUserData returns the user data for a given Starknet ID, domain or address.
+// func (p *Provider) GetUserData(
+// 	ctx context.Context,
+// 	idDomainOrAddr string,
+// 	field string,
+// ) (string, error) {
+// 	// TODO implementation not working yet
+// 	return "", fmt.Errorf("not implemented")
 
-	// var contract string
-	// var err error
-	// if p.StarknetIdContracts != nil &&
-	// 	p.StarknetIdContracts.IdentityContract != "" {
-	// 	contract = p.StarknetIdContracts.IdentityContract
-	// } else if p.ChainId != "" {
-	// 	contract, err = utils.GetIdentityContract(p.ChainId)
-	// 	if err != nil {
-	// 		return "", fmt.Errorf(
-	// 			"failed to get identity contract with chainId %s: %w",
-	// 			p.ChainId,
-	// 			err,
-	// 		)
-	// 	}
-	// } else {
-	// 	return "", fmt.Errorf(
-	// 		"Provider not initialized with chainId or StarknetIdContracts",
-	// 	)
-	// }
-	// contractAddress, err := NethermindEthUtils.HexToFelt(contract)
-	// if err != nil {
-	// 	return "", fmt.Errorf(
-	// 		"failed to convert contract address %s: %w",
-	// 		contract,
-	// 		err,
-	// 	)
-	// }
+// 	// var contract string
+// 	// var err error
+// 	// if p.StarknetIdContracts != nil &&
+// 	// 	p.StarknetIdContracts.IdentityContract != "" {
+// 	// 	contract = p.StarknetIdContracts.IdentityContract
+// 	// } else if p.ChainId != "" {
+// 	// 	contract, err = utils.GetIdentityContract(p.ChainId)
+// 	// 	if err != nil {
+// 	// 		return "", fmt.Errorf(
+// 	// 			"failed to get identity contract with chainId %s: %w",
+// 	// 			p.ChainId,
+// 	// 			err,
+// 	// 		)
+// 	// 	}
+// 	// } else {
+// 	// 	return "", fmt.Errorf(
+// 	// 		"Provider not initialized with chainId or StarknetIdContracts",
+// 	// 	)
+// 	// }
+// 	// contractAddress, err := NethermindEthUtils.HexToFelt(contract)
+// 	// if err != nil {
+// 	// 	return "", fmt.Errorf(
+// 	// 		"failed to convert contract address %s: %w",
+// 	// 		contract,
+// 	// 		err,
+// 	// 	)
+// 	// }
 
-	// id, err := p.checkArguments(ctx, idDomainOrAddr)
-	// if err != nil {
-	// 	return "", fmt.Errorf("failed to check arguments: %w", err)
-	// }
-	// idFelt, err := (&felt.Felt{}).SetString(id)
-	// if err != nil {
-	// 	return "", fmt.Errorf("failed to convert id %s: %w", id, err)
-	// }
+// 	// id, err := p.checkArguments(ctx, idDomainOrAddr)
+// 	// if err != nil {
+// 	// 	return "", fmt.Errorf("failed to check arguments: %w", err)
+// 	// }
+// 	// idFelt, err := (&felt.Felt{}).SetString(id)
+// 	// if err != nil {
+// 	// 	return "", fmt.Errorf("failed to convert id %s: %w", id, err)
+// 	// }
 
-	// fieldFelt, err := utils.EncodeShortString(field)
-	// if err != nil {
-	// 	return "", fmt.Errorf("failed to encode field %s: %w", field, err)
-	// }
+// 	// fieldFelt, err := utils.EncodeShortString(field)
+// 	// if err != nil {
+// 	// 	return "", fmt.Errorf("failed to encode field %s: %w", field, err)
+// 	// }
 
-	// callData := []*felt.Felt{
-	// 	idFelt,
-	// 	fieldFelt,
-	// 	(&felt.Felt{}).SetUint64(0),
-	// }
+// 	// callData := []*felt.Felt{
+// 	// 	idFelt,
+// 	// 	fieldFelt,
+// 	// 	(&felt.Felt{}).SetUint64(0),
+// 	// }
 
-	// tx := rpc.FunctionCall{
-	// 	ContractAddress: contractAddress,
-	// 	EntryPointSelector: NethermindEthUtils.GetSelectorFromNameFelt(
-	// 		"get_user_data",
-	// 	),
-	// 	Calldata: callData,
-	// }
+// 	// tx := rpc.FunctionCall{
+// 	// 	ContractAddress: contractAddress,
+// 	// 	EntryPointSelector: NethermindEthUtils.GetSelectorFromNameFelt(
+// 	// 		"get_user_data",
+// 	// 	),
+// 	// 	Calldata: callData,
+// 	// }
 
-	// if blockId == nil {
-	// 	blockId = &rpc.BlockID{Tag: "latest"}
-	// }
+// 	// result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+// 	// if rpcErr != nil {
+// 	// 	return "", fmt.Errorf("failed to call contract: %w", rpcErr)
+// 	// }
 
-	// result, rpcErr := p.Client.Call(ctx, tx, *blockId)
-	// if rpcErr != nil {
-	// 	return "", fmt.Errorf("failed to call contract: %w", rpcErr)
-	// }
+// 	// fmt.Printf("result: %v\n", result)
 
-	// fmt.Printf("result: %v\n", result)
+// 	// return "", nil
+// }
 
-	// return "", nil
-}
+// // GetExtendedUserData returns the extended user data for a given Starknet ID,
+// // domain or address.
+// func (p *Provider) GetExtendedUserData(
+// 	ctx context.Context,
+// 	idDomainOrAddr string,
+// 	field string,
+// 	length int,
+// ) ([]string, error) {
+// 	// TODO implement
+// 	return nil, fmt.Errorf("not implemented")
+// }
 
-// GetExtendedUserData returns the extended user data for a given Starknet ID,
-// domain or address.
-func (p *Provider) GetExtendedUserData(
-	ctx context.Context,
-	idDomainOrAddr string,
-	field string,
-	length int,
-	blockId *rpc.BlockID,
-) ([]string, error) {
-	// TODO implement
-	return nil, fmt.Errorf("not implemented")
-}
+// // GetUnboundedUserData returns the unbounded user data for a given Starknet ID,
+// // domain or address.
+// func (p *Provider) GetUnboundedUserData(
+// 	ctx context.Context,
+// 	idDomainOrAddr string,
+// 	field string,
+// ) ([]string, error) {
+// 	// TODO implement
+// 	return nil, fmt.Errorf("not implemented")
+// }
 
-// GetUnboundedUserData returns the unbounded user data for a given Starknet ID,
-// domain or address.
-func (p *Provider) GetUnboundedUserData(
-	ctx context.Context,
-	idDomainOrAddr string,
-	field string,
-	blockId *rpc.BlockID,
-) ([]string, error) {
-	// TODO implement
-	return nil, fmt.Errorf("not implemented")
-}
+// // GetVerifierData returns the verifier data for a given Starknet ID, domain or
+// // address.
+// func (p *Provider) GetVerifierData(
+// 	ctx context.Context,
+// 	idDomainOrAddr string,
+// 	field string,
+// 	verifier *string,
+// ) (string, error) {
+// 	// TODO implement
+// 	return "", fmt.Errorf("not implemented")
+// }
 
-// GetVerifierData returns the verifier data for a given Starknet ID, domain or
-// address.
-func (p *Provider) GetVerifierData(
-	ctx context.Context,
-	idDomainOrAddr string,
-	field string,
-	verifier *string,
-	blockId *rpc.BlockID,
-) (string, error) {
-	// TODO implement
-	return "", fmt.Errorf("not implemented")
-}
+// // GetExtendedVerifierData returns the extended verifier data for a given
+// // Starknet ID, domain or address.
+// func (p *Provider) GetExtendedVerifierData(
+// 	ctx context.Context,
+// 	idDomainOrAddr string,
+// 	field string,
+// 	length int,
+// 	verifier *string,
+// ) ([]string, error) {
+// 	// TODO implement
+// 	return nil, fmt.Errorf("not implemented")
+// }
 
-// GetExtendedVerifierData returns the extended verifier data for a given
-// Starknet ID, domain or address.
-func (p *Provider) GetExtendedVerifierData(
-	ctx context.Context,
-	idDomainOrAddr string,
-	field string,
-	length int,
-	verifier *string,
-	blockId *rpc.BlockID,
-) ([]string, error) {
-	// TODO implement
-	return nil, fmt.Errorf("not implemented")
-}
+// // GetUnboundedVerifierData returns the unbounded verifier data for a given
+// // Starknet ID, domain or address.
+// func (p *Provider) GetUnboundedVerifierData(
+// 	ctx context.Context,
+// 	idDomainOrAddr string,
+// 	field string,
+// 	verifier *string,
+// ) ([]string, error) {
+// 	// TODO implement
+// 	return nil, fmt.Errorf("not implemented")
+// }
 
-// GetUnboundedVerifierData returns the unbounded verifier data for a given
-// Starknet ID, domain or address.
-func (p *Provider) GetUnboundedVerifierData(
-	ctx context.Context,
-	idDomainOrAddr string,
-	field string,
-	verifier *string,
-	blockId *rpc.BlockID,
-) ([]string, error) {
-	// TODO implement
-	return nil, fmt.Errorf("not implemented")
-}
+// // GetPfpVerifierData returns the profile picture verifier data for a given
+// // Starknet ID, domain or address.
+// func (p *Provider) GetPfpVerifierData(
+// 	ctx context.Context,
+// 	idDomainOrAddr string,
+// 	verifier *string,
+// ) (string, error) {
+// 	// TODO implement
+// 	return "", fmt.Errorf("not implemented")
+// }
 
-// GetPfpVerifierData returns the profile picture verifier data for a given
-// Starknet ID, domain or address.
-func (p *Provider) GetPfpVerifierData(
-	ctx context.Context,
-	idDomainOrAddr string,
-	verifier *string,
-	blockId *rpc.BlockID,
-) (string, error) {
-	// TODO implement
-	return "", fmt.Errorf("not implemented")
-}
+// // GetExtendedPfpVerifierData returns the extended profile data for a given
+// // address.
+// func (p *Provider) GetProfileData(
+// 	ctx context.Context,
+// 	address string,
+// 	useDefaultPfp bool,
+// 	verifier *string,
+// 	pfpVerifier *string,
+// 	popVerifier *string,
+// ) (types.StarkProfile, error) {
+// 	// TODO implement
+// 	return types.StarkProfile{}, fmt.Errorf("not implemented")
+// }
 
-// GetExtendedPfpVerifierData returns the extended profile data for a given
-// address.
-func (p *Provider) GetProfileData(
-	ctx context.Context,
-	address string,
-	useDefaultPfp bool,
-	verifier *string,
-	pfpVerifier *string,
-	popVerifier *string,
-	blockId *rpc.BlockID,
-) (types.StarkProfile, error) {
-	// TODO implement
-	return types.StarkProfile{}, fmt.Errorf("not implemented")
-}
-
-// GetStarkProfiles returns the profile data for a given list of addresses.
-func (p *Provider) GetStarkProfiles(
-	ctx context.Context,
-	addresses []string,
-	useDefaultPfp bool,
-	pfpVerifier *string,
-	blockId *rpc.BlockID,
-) ([]types.StarkProfile, error) {
-	// TODO implement
-	return nil, fmt.Errorf("not implemented")
-}
+// // GetStarkProfiles returns the profile data for a given list of addresses.
+// func (p *Provider) GetStarkProfiles(
+// 	ctx context.Context,
+// 	addresses []string,
+// 	useDefaultPfp bool,
+// 	pfpVerifier *string,
+// ) ([]types.StarkProfile, error) {
+// 	// TODO implement
+// 	return nil, fmt.Errorf("not implemented")
+// }
 
 // tryResolveDomain tries to resolve a .stark domain to an address.
 func (p *Provider) tryResolveDomain(
@@ -398,7 +372,6 @@ func (p *Provider) tryResolveDomain(
 	contract string,
 	encodedDomain []*felt.Felt,
 	hint []*felt.Felt,
-	blockId *rpc.BlockID,
 ) (string, error) {
 	contractAddress, err := NethermindEthUtils.HexToFelt(contract)
 	if err != nil {
@@ -420,11 +393,7 @@ func (p *Provider) tryResolveDomain(
 		),
 	}
 
-	if blockId == nil {
-		blockId = &rpc.BlockID{Tag: "latest"}
-	}
-
-	result, rpcErr := p.Client.Call(ctx, tx, *blockId)
+	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
 	if rpcErr != nil {
 		return "", fmt.Errorf("failed to call contract: %w", rpcErr)
 	}
@@ -442,7 +411,6 @@ func (p *Provider) tryResolveAddress(
 	contract string,
 	address string,
 	hint []*felt.Felt,
-	blockId *rpc.BlockID,
 ) (string, error) {
 	contractAddress, err := NethermindEthUtils.HexToFelt(contract)
 	if err != nil {
@@ -473,11 +441,7 @@ func (p *Provider) tryResolveAddress(
 		),
 	}
 
-	if blockId == nil {
-		blockId = &rpc.BlockID{Tag: "latest"}
-	}
-
-	result, rpcErr := p.Client.Call(ctx, tx, *blockId)
+	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
 	if rpcErr != nil {
 		return "", fmt.Errorf("failed to call contract: %w", rpcErr)
 	}
@@ -503,7 +467,6 @@ func (p *Provider) checkArguments(
 		id, err := p.GetStarknetId(
 			ctx,
 			idDomainOrAddr,
-			&rpc.BlockID{Tag: "latest"},
 		)
 		if err != nil {
 			return "", fmt.Errorf("failed to get Starknet ID: %w", err)
@@ -516,12 +479,11 @@ func (p *Provider) checkArguments(
 		domain, err := p.GetStarkName(
 			ctx,
 			idDomainOrAddr,
-			&rpc.BlockID{Tag: "latest"},
 		)
 		if err != nil {
 			return "", fmt.Errorf("failed to get Stark name: %w", err)
 		}
-		return p.GetStarknetId(ctx, domain, &rpc.BlockID{Tag: "latest"})
+		return p.GetStarknetId(ctx, domain)
 	} else {
 		return "", fmt.Errorf("invalid idDomainOrAddr")
 	}

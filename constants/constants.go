@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	"github.com/NethermindEth/juno/core/felt"
+	"github.com/NethermindEth/starknet.go/rpc"
 	"github.com/metacube-games/starknetid.go/types"
 )
 
@@ -62,4 +63,6 @@ var (
 						SetUint64(uint64(len(EXTENDED_ALPHABET) + 1))
 	EXTENDED_ALPHABET_SIZE_PLUS_ONE_BIGINT = big.
 						NewInt(int64(len(EXTENDED_ALPHABET) + 1))
+
+	BLOCK_ID = rpc.BlockID{Tag: "latest"}
 )
