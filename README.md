@@ -82,7 +82,17 @@ The library is still in development and not all features are implemented yet
 | `GetProfileData` | ❌ |
 | `GetStarkProfiles` | ❌ |
 
+## Contribute
+
+Contributions are welcome! Please refer to the [contribution guidelines](CONTRIBUTING.md) for more information.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 ## Contributors
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -99,3 +109,5 @@ The library is still in development and not all features are implemented yet
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
