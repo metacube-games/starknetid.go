@@ -1,4 +1,25 @@
 {
   "projectName": "starknetid.go",
-  "projectOwner": "metacube-games"
+  "projectOwner": "metacube-games",
+  "files": [
+    "README.md"
+  ],
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributorsPerLine": 7,
+  "contributors": [
+    {
+      "login": "BastienFaivre",
+      "name": "Bastien Faivre",
+      "avatar_url": "https://avatars.githubusercontent.com/u/57015770?v=4",
+      "profile": "https://github.com/BastienFaivre",
+      "contributions": [
+        "code",
+        "doc",
+        "example",
+        "maintenance",
+        "test"
+      ]
+    }
+  ]
 }
