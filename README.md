@@ -72,7 +72,7 @@ The library is still in development and not all features are implemented yet
 | `GetStarkName` | ✅ |
 | `GetStarkNames` | ❌ |
 | `GetStarknetId` | ✅ |
-| `GetUserData` | ✅ |
+| `GetUserData` | 🛠️ |
 | `GetExtendedUserData` | 🛠️ |
 | `GetUnboundedUserData` | 🛠️ |
 | `GetVerifierData` | 🛠️ |
