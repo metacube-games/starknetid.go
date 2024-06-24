@@ -53,7 +53,7 @@ if err != nil {
 
 ```go
 // Example: Get address from Stark name
-address, err := provider.GetAddressFromStarkName(context.Background(), `metacube.stark`)
+address, err := provider.GetAddressFromStarkName(context.Background(), "metacube.stark")
 if err != nil {
   panic(err)
 }
@@ -70,14 +70,14 @@ The library is still in development and not all features are implemented yet
 | --- | --- |
 | `GetAddressFromStarkName` | ✅ |
 | `GetStarkName` | ✅ |
-| `GetStarknetId` | ✅ |
-| `GetUserData` | 🛠️ |
 | `GetStarkNames` | ❌ |
-| `GetExtendedUserData` | ❌ |
-| `GetUnboundedUserData` | ❌ |
-| `GetVerifierData` | ❌ |
-| `GetExtendedVerifierData` | ❌ |
-| `GetUnboundedVerifierData` | ❌ |
+| `GetStarknetId` | ✅ |
+| `GetUserData` | ✅ |
+| `GetExtendedUserData` | 🛠️ |
+| `GetUnboundedUserData` | 🛠️ |
+| `GetVerifierData` | 🛠️ |
+| `GetExtendedVerifierData` | 🛠️ |
+| `GetUnboundedVerifierData` | 🛠️ |
 | `GetPfpVerifierData` | ❌ |
 | `GetProfileData` | ❌ |
 | `GetStarkProfiles` | ❌ |
