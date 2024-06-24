@@ -10,10 +10,15 @@ import (
 )
 
 const (
-	RPC_URL          = "https://starknet-mainnet.public.blastapi.io/rpc/v0_7"
-	METACUBE_ADDRESS = "0x2ba4ea61d80d1a60adf03150b7634af5fee6f4b3167d915ab8cce2be3ac2023"
-	METACUBE_DOMAIN  = "metacube.stark"
-	METACUBE_ID      = "899148099505"
+	RPC_URL            = "https://starknet-mainnet.public.blastapi.io/rpc/v0_7"
+	METACUBE_ADDRESS   = "0x2ba4ea61d80d1a60adf03150b7634af5fee6f4b3167d915ab8cce2be3ac2023"
+	METACUBE_DOMAIN    = "metacube.stark"
+	METACUBE_ID        = "899148099505"
+	METACUBE_NAME_DATA = "0x4c81b30ba350e0b28880951cb656abc37cfd78b343d993af79edd6f13d96905"
+)
+
+var (
+	METACUBE_NAME_VERIFIER_CONTRACT = "0x06ac597f8116f886fa1c97a23fa4e08299975ecaf6b598873ca6792b9bbfb678"
 )
 
 func createProvider() (*Provider, error) {
@@ -112,5 +117,174 @@ func TestGetStarknetId(t *testing.T) {
 	}
 	if starknetId != METACUBE_ID {
 		t.Errorf("Expected %s but got %s", METACUBE_ID, starknetId)
+	}
+}
+
+func TestGetUserData(t *testing.T) {
+	p, err := createProvider()
+	if err != nil {
+		t.Error(err)
+	}
+
+	userData, err := p.GetUserData(
+		context.Background(),
+		METACUBE_ADDRESS,
+		"starknet",
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if userData.String() != METACUBE_ADDRESS {
+		t.Errorf("Expected %s but got %s", METACUBE_ADDRESS, userData.String())
+	}
+}
+
+func TestGetExtendedUserData(t *testing.T) {
+	p, err := createProvider()
+	if err != nil {
+		t.Error(err)
+	}
+
+	extendedUserData, err := p.GetExtendedUserData(
+		context.Background(),
+		METACUBE_ADDRESS,
+		"starknet",
+		3,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if extendedUserData[0].String() != METACUBE_ADDRESS {
+		t.Errorf(
+			"Expected %s but got %s",
+			METACUBE_ADDRESS,
+			extendedUserData[0].String(),
+		)
+	}
+	if extendedUserData[1].String() != "0x0" {
+		t.Errorf(
+			"Expected empty string but got %s",
+			extendedUserData[1].String(),
+		)
+	}
+	if extendedUserData[2].String() != "0x0" {
+		t.Errorf(
+			"Expected empty string but got %s",
+			extendedUserData[2].String(),
+		)
+	}
+}
+
+func TestGetUnboundedUserData(t *testing.T) {
+	p, err := createProvider()
+	if err != nil {
+		t.Error(err)
+	}
+
+	unboundedUserData, err := p.GetUnboundedUserData(
+		context.Background(),
+		METACUBE_ADDRESS,
+		"starknet",
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(unboundedUserData) != 1 {
+		t.Errorf("Expected 1 but got %d", len(unboundedUserData))
+	}
+	if unboundedUserData[0].String() != METACUBE_ADDRESS {
+		t.Errorf(
+			"Expected %s but got %s",
+			METACUBE_ADDRESS,
+			unboundedUserData[0].String(),
+		)
+	}
+}
+
+func TestGetVerifierData(t *testing.T) {
+	p, err := createProvider()
+	if err != nil {
+		t.Error(err)
+	}
+
+	verifierData, err := p.GetVerifierData(
+		context.Background(),
+		METACUBE_ADDRESS,
+		"name",
+		&METACUBE_NAME_VERIFIER_CONTRACT,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if verifierData.String() != METACUBE_NAME_DATA {
+		t.Errorf(
+			"Expected %s but got %s",
+			METACUBE_NAME_DATA,
+			verifierData.String(),
+		)
+	}
+}
+
+func TestGetExtendedVerifierData(t *testing.T) {
+	p, err := createProvider()
+	if err != nil {
+		t.Error(err)
+	}
+
+	extendedVerifierData, err := p.GetExtendedVerifierData(
+		context.Background(),
+		METACUBE_ADDRESS,
+		"name",
+		3,
+		&METACUBE_NAME_VERIFIER_CONTRACT,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if extendedVerifierData[0].String() != METACUBE_NAME_DATA {
+		t.Errorf(
+			"Expected %s but got %s",
+			METACUBE_NAME_DATA,
+			extendedVerifierData[0].String(),
+		)
+	}
+	if extendedVerifierData[1].String() != "0x0" {
+		t.Errorf(
+			"Expected empty string but got %s",
+			extendedVerifierData[1].String(),
+		)
+	}
+	if extendedVerifierData[2].String() != "0x0" {
+		t.Errorf(
+			"Expected empty string but got %s",
+			extendedVerifierData[2].String(),
+		)
+	}
+}
+
+func TestGetUnboundedVerifierData(t *testing.T) {
+	p, err := createProvider()
+	if err != nil {
+		t.Error(err)
+	}
+
+	unboundedVerifierData, err := p.GetUnboundedVerifierData(
+		context.Background(),
+		METACUBE_ADDRESS,
+		"name",
+		&METACUBE_NAME_VERIFIER_CONTRACT,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(unboundedVerifierData) != 1 {
+		t.Errorf("Expected 1 but got %d", len(unboundedVerifierData))
+	}
+	if unboundedVerifierData[0].String() != METACUBE_NAME_DATA {
+		t.Errorf(
+			"Expected %s but got %s",
+			METACUBE_NAME_DATA,
+			unboundedVerifierData[0].String(),
+		)
 	}
 }

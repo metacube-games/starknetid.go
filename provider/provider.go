@@ -195,140 +195,511 @@ func (p *Provider) GetStarknetId(
 	return result[0].Text(10), nil
 }
 
-// // GetUserData returns the user data for a given Starknet ID, domain or address.
-// func (p *Provider) GetUserData(
-// 	ctx context.Context,
-// 	idDomainOrAddr string,
-// 	field string,
-// ) (string, error) {
-// 	// TODO implementation not working yet
-// 	return "", fmt.Errorf("not implemented")
+// GetUserData returns the user data for a given Starknet ID, domain or address.
+func (p *Provider) GetUserData(
+	ctx context.Context,
+	idDomainOrAddr string,
+	field string,
+) (*felt.Felt, error) {
+	var contract string
+	var err error
+	if p.StarknetIdContracts != nil &&
+		p.StarknetIdContracts.IdentityContract != "" {
+		contract = p.StarknetIdContracts.IdentityContract
+	} else if p.ChainId != "" {
+		contract, err = utils.GetIdentityContract(p.ChainId)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to get identity contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		return nil, fmt.Errorf(
+			"Provider not initialized with chainId or StarknetIdContracts",
+		)
+	}
+	contractAddress, err := NethermindEthUtils.HexToFelt(contract)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to convert contract address %s: %w",
+			contract,
+			err,
+		)
+	}
 
-// 	// var contract string
-// 	// var err error
-// 	// if p.StarknetIdContracts != nil &&
-// 	// 	p.StarknetIdContracts.IdentityContract != "" {
-// 	// 	contract = p.StarknetIdContracts.IdentityContract
-// 	// } else if p.ChainId != "" {
-// 	// 	contract, err = utils.GetIdentityContract(p.ChainId)
-// 	// 	if err != nil {
-// 	// 		return "", fmt.Errorf(
-// 	// 			"failed to get identity contract with chainId %s: %w",
-// 	// 			p.ChainId,
-// 	// 			err,
-// 	// 		)
-// 	// 	}
-// 	// } else {
-// 	// 	return "", fmt.Errorf(
-// 	// 		"Provider not initialized with chainId or StarknetIdContracts",
-// 	// 	)
-// 	// }
-// 	// contractAddress, err := NethermindEthUtils.HexToFelt(contract)
-// 	// if err != nil {
-// 	// 	return "", fmt.Errorf(
-// 	// 		"failed to convert contract address %s: %w",
-// 	// 		contract,
-// 	// 		err,
-// 	// 	)
-// 	// }
+	id, err := p.checkArguments(ctx, idDomainOrAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check arguments: %w", err)
+	}
+	idFelt, err := (&felt.Felt{}).SetString(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert id %s: %w", id, err)
+	}
 
-// 	// id, err := p.checkArguments(ctx, idDomainOrAddr)
-// 	// if err != nil {
-// 	// 	return "", fmt.Errorf("failed to check arguments: %w", err)
-// 	// }
-// 	// idFelt, err := (&felt.Felt{}).SetString(id)
-// 	// if err != nil {
-// 	// 	return "", fmt.Errorf("failed to convert id %s: %w", id, err)
-// 	// }
+	fieldFelt, err := utils.EncodeShortString(field)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode field %s: %w", field, err)
+	}
 
-// 	// fieldFelt, err := utils.EncodeShortString(field)
-// 	// if err != nil {
-// 	// 	return "", fmt.Errorf("failed to encode field %s: %w", field, err)
-// 	// }
+	callData := []*felt.Felt{
+		idFelt,
+		fieldFelt,
+		(&felt.Felt{}).SetUint64(0),
+	}
 
-// 	// callData := []*felt.Felt{
-// 	// 	idFelt,
-// 	// 	fieldFelt,
-// 	// 	(&felt.Felt{}).SetUint64(0),
-// 	// }
+	tx := rpc.FunctionCall{
+		ContractAddress: contractAddress,
+		EntryPointSelector: NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_user_data",
+		),
+		Calldata: callData,
+	}
 
-// 	// tx := rpc.FunctionCall{
-// 	// 	ContractAddress: contractAddress,
-// 	// 	EntryPointSelector: NethermindEthUtils.GetSelectorFromNameFelt(
-// 	// 		"get_user_data",
-// 	// 	),
-// 	// 	Calldata: callData,
-// 	// }
+	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if rpcErr != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	}
 
-// 	// result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
-// 	// if rpcErr != nil {
-// 	// 	return "", fmt.Errorf("failed to call contract: %w", rpcErr)
-// 	// }
+	if len(result) != 1 {
+		return nil, fmt.Errorf("unexpected result length %d", len(result))
+	}
 
-// 	// fmt.Printf("result: %v\n", result)
+	return result[0], nil
+}
 
-// 	// return "", nil
-// }
+// GetExtendedUserData returns the extended user data for a given Starknet ID,
+// domain or address.
+func (p *Provider) GetExtendedUserData(
+	ctx context.Context,
+	idDomainOrAddr string,
+	field string,
+	length int,
+) ([]*felt.Felt, error) {
+	var contract string
+	var err error
+	if p.StarknetIdContracts != nil &&
+		p.StarknetIdContracts.IdentityContract != "" {
+		contract = p.StarknetIdContracts.IdentityContract
+	} else if p.ChainId != "" {
+		contract, err = utils.GetIdentityContract(p.ChainId)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to get identity contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		return nil, fmt.Errorf(
+			"Provider not initialized with chainId or StarknetIdContracts",
+		)
+	}
+	contractAddress, err := NethermindEthUtils.HexToFelt(contract)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to convert contract address %s: %w",
+			contract,
+			err,
+		)
+	}
 
-// // GetExtendedUserData returns the extended user data for a given Starknet ID,
-// // domain or address.
-// func (p *Provider) GetExtendedUserData(
-// 	ctx context.Context,
-// 	idDomainOrAddr string,
-// 	field string,
-// 	length int,
-// ) ([]string, error) {
-// 	// TODO implement
-// 	return nil, fmt.Errorf("not implemented")
-// }
+	id, err := p.checkArguments(ctx, idDomainOrAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check arguments: %w", err)
+	}
+	idFelt, err := (&felt.Felt{}).SetString(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert id %s: %w", id, err)
+	}
 
-// // GetUnboundedUserData returns the unbounded user data for a given Starknet ID,
-// // domain or address.
-// func (p *Provider) GetUnboundedUserData(
-// 	ctx context.Context,
-// 	idDomainOrAddr string,
-// 	field string,
-// ) ([]string, error) {
-// 	// TODO implement
-// 	return nil, fmt.Errorf("not implemented")
-// }
+	fieldFelt, err := utils.EncodeShortString(field)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode field %s: %w", field, err)
+	}
 
-// // GetVerifierData returns the verifier data for a given Starknet ID, domain or
-// // address.
-// func (p *Provider) GetVerifierData(
-// 	ctx context.Context,
-// 	idDomainOrAddr string,
-// 	field string,
-// 	verifier *string,
-// ) (string, error) {
-// 	// TODO implement
-// 	return "", fmt.Errorf("not implemented")
-// }
+	callData := []*felt.Felt{
+		idFelt,
+		fieldFelt,
+		(&felt.Felt{}).SetUint64(uint64(length)),
+		(&felt.Felt{}).SetUint64(0),
+	}
 
-// // GetExtendedVerifierData returns the extended verifier data for a given
-// // Starknet ID, domain or address.
-// func (p *Provider) GetExtendedVerifierData(
-// 	ctx context.Context,
-// 	idDomainOrAddr string,
-// 	field string,
-// 	length int,
-// 	verifier *string,
-// ) ([]string, error) {
-// 	// TODO implement
-// 	return nil, fmt.Errorf("not implemented")
-// }
+	tx := rpc.FunctionCall{
+		ContractAddress: contractAddress,
+		EntryPointSelector: NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_extended_user_data",
+		),
+		Calldata: callData,
+	}
 
-// // GetUnboundedVerifierData returns the unbounded verifier data for a given
-// // Starknet ID, domain or address.
-// func (p *Provider) GetUnboundedVerifierData(
-// 	ctx context.Context,
-// 	idDomainOrAddr string,
-// 	field string,
-// 	verifier *string,
-// ) ([]string, error) {
-// 	// TODO implement
-// 	return nil, fmt.Errorf("not implemented")
-// }
+	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if rpcErr != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	}
+
+	return result[1:], nil
+}
+
+// GetUnboundedUserData returns the unbounded user data for a given Starknet ID,
+// domain or address.
+func (p *Provider) GetUnboundedUserData(
+	ctx context.Context,
+	idDomainOrAddr string,
+	field string,
+) ([]*felt.Felt, error) {
+	var contract string
+	var err error
+	if p.StarknetIdContracts != nil &&
+		p.StarknetIdContracts.IdentityContract != "" {
+		contract = p.StarknetIdContracts.IdentityContract
+	} else if p.ChainId != "" {
+		contract, err = utils.GetIdentityContract(p.ChainId)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to get identity contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		return nil, fmt.Errorf(
+			"Provider not initialized with chainId or StarknetIdContracts",
+		)
+	}
+	contractAddress, err := NethermindEthUtils.HexToFelt(contract)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to convert contract address %s: %w",
+			contract,
+			err,
+		)
+	}
+
+	id, err := p.checkArguments(ctx, idDomainOrAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check arguments: %w", err)
+	}
+	idFelt, err := (&felt.Felt{}).SetString(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert id %s: %w", id, err)
+	}
+
+	fieldFelt, err := utils.EncodeShortString(field)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode field %s: %w", field, err)
+	}
+
+	callData := []*felt.Felt{
+		idFelt,
+		fieldFelt,
+		(&felt.Felt{}).SetUint64(0),
+	}
+
+	tx := rpc.FunctionCall{
+		ContractAddress: contractAddress,
+		EntryPointSelector: NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_unbounded_user_data",
+		),
+		Calldata: callData,
+	}
+
+	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if rpcErr != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	}
+
+	return result[1:], nil
+}
+
+// GetVerifierData returns the verifier data for a given Starknet ID, domain or
+// address.
+func (p *Provider) GetVerifierData(
+	ctx context.Context,
+	idDomainOrAddr string,
+	field string,
+	verifier *string,
+) (*felt.Felt, error) {
+	var contract string
+	var err error
+	if p.StarknetIdContracts != nil &&
+		p.StarknetIdContracts.IdentityContract != "" {
+		contract = p.StarknetIdContracts.IdentityContract
+	} else if p.ChainId != "" {
+		contract, err = utils.GetIdentityContract(p.ChainId)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to get identity contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		return nil, fmt.Errorf(
+			"Provider not initialized with chainId or StarknetIdContracts",
+		)
+	}
+	contractAddress, err := NethermindEthUtils.HexToFelt(contract)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to convert contract address %s: %w",
+			contract,
+			err,
+		)
+	}
+
+	if verifier == nil {
+		contract, err = utils.GetVerifierContract(p.ChainId)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to get verifier contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		contract = *verifier
+	}
+	verifierAddress, err := NethermindEthUtils.HexToFelt(contract)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to convert verifier address %s: %w",
+			*verifier,
+			err,
+		)
+	}
+
+	id, err := p.checkArguments(ctx, idDomainOrAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check arguments: %w", err)
+	}
+	idFelt, err := (&felt.Felt{}).SetString(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert id %s: %w", id, err)
+	}
+
+	fieldFelt, err := utils.EncodeShortString(field)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode field %s: %w", field, err)
+	}
+
+	callData := []*felt.Felt{
+		idFelt,
+		fieldFelt,
+		verifierAddress,
+		(&felt.Felt{}).SetUint64(0),
+	}
+
+	tx := rpc.FunctionCall{
+		ContractAddress: contractAddress,
+		EntryPointSelector: NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_verifier_data",
+		),
+		Calldata: callData,
+	}
+
+	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if rpcErr != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	}
+
+	if len(result) != 1 {
+		return nil, fmt.Errorf("unexpected result length %d", len(result))
+	}
+
+	return result[0], nil
+}
+
+// GetExtendedVerifierData returns the extended verifier data for a given
+// Starknet ID, domain or address.
+func (p *Provider) GetExtendedVerifierData(
+	ctx context.Context,
+	idDomainOrAddr string,
+	field string,
+	length int,
+	verifier *string,
+) ([]*felt.Felt, error) {
+	var contract string
+	var err error
+	if p.StarknetIdContracts != nil &&
+		p.StarknetIdContracts.IdentityContract != "" {
+		contract = p.StarknetIdContracts.IdentityContract
+	} else if p.ChainId != "" {
+		contract, err = utils.GetIdentityContract(p.ChainId)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to get identity contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		return nil, fmt.Errorf(
+			"Provider not initialized with chainId or StarknetIdContracts",
+		)
+	}
+	contractAddress, err := NethermindEthUtils.HexToFelt(contract)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to convert contract address %s: %w",
+			contract,
+			err,
+		)
+	}
+
+	if verifier == nil {
+		contract, err = utils.GetVerifierContract(p.ChainId)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to get verifier contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		contract = *verifier
+	}
+	verifierAddress, err := NethermindEthUtils.HexToFelt(contract)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to convert verifier address %s: %w",
+			*verifier,
+			err,
+		)
+	}
+
+	id, err := p.checkArguments(ctx, idDomainOrAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check arguments: %w", err)
+	}
+	idFelt, err := (&felt.Felt{}).SetString(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert id %s: %w", id, err)
+	}
+
+	fieldFelt, err := utils.EncodeShortString(field)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode field %s: %w", field, err)
+	}
+
+	callData := []*felt.Felt{
+		idFelt,
+		fieldFelt,
+		(&felt.Felt{}).SetUint64(uint64(length)),
+		verifierAddress,
+		(&felt.Felt{}).SetUint64(0),
+	}
+
+	tx := rpc.FunctionCall{
+		ContractAddress: contractAddress,
+		EntryPointSelector: NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_extended_verifier_data",
+		),
+		Calldata: callData,
+	}
+
+	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if rpcErr != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	}
+
+	return result[1:], nil
+}
+
+// GetUnboundedVerifierData returns the unbounded verifier data for a given
+// Starknet ID, domain or address.
+func (p *Provider) GetUnboundedVerifierData(
+	ctx context.Context,
+	idDomainOrAddr string,
+	field string,
+	verifier *string,
+) ([]*felt.Felt, error) {
+	var contract string
+	var err error
+	if p.StarknetIdContracts != nil &&
+		p.StarknetIdContracts.IdentityContract != "" {
+		contract = p.StarknetIdContracts.IdentityContract
+	} else if p.ChainId != "" {
+		contract, err = utils.GetIdentityContract(p.ChainId)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to get identity contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		return nil, fmt.Errorf(
+			"Provider not initialized with chainId or StarknetIdContracts",
+		)
+	}
+	contractAddress, err := NethermindEthUtils.HexToFelt(contract)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to convert contract address %s: %w",
+			contract,
+			err,
+		)
+	}
+
+	if verifier == nil {
+		contract, err = utils.GetVerifierContract(p.ChainId)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to get verifier contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		contract = *verifier
+	}
+	verifierAddress, err := NethermindEthUtils.HexToFelt(contract)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to convert verifier address %s: %w",
+			*verifier,
+			err,
+		)
+	}
+
+	id, err := p.checkArguments(ctx, idDomainOrAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check arguments: %w", err)
+	}
+	idFelt, err := (&felt.Felt{}).SetString(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert id %s: %w", id, err)
+	}
+
+	fieldFelt, err := utils.EncodeShortString(field)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode field %s: %w", field, err)
+	}
+
+	callData := []*felt.Felt{
+		idFelt,
+		fieldFelt,
+		verifierAddress,
+		(&felt.Felt{}).SetUint64(0),
+	}
+
+	tx := rpc.FunctionCall{
+		ContractAddress: contractAddress,
+		EntryPointSelector: NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_unbounded_verifier_data",
+		),
+		Calldata: callData,
+	}
+
+	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if rpcErr != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	}
+
+	return result[1:], nil
+}
 
 // // GetPfpVerifierData returns the profile picture verifier data for a given
 // // Starknet ID, domain or address.

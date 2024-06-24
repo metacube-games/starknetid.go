@@ -72,12 +72,12 @@ The library is still in development and not all features are implemented yet
 | `GetStarkName` | ✅ |
 | `GetStarkNames` | ❌ |
 | `GetStarknetId` | ✅ |
-| `GetUserData` | 🛠️ |
-| `GetExtendedUserData` | 🛠️ |
-| `GetUnboundedUserData` | 🛠️ |
-| `GetVerifierData` | 🛠️ |
-| `GetExtendedVerifierData` | 🛠️ |
-| `GetUnboundedVerifierData` | 🛠️ |
+| `GetUserData` | ✅ |
+| `GetExtendedUserData` | ✅ |
+| `GetUnboundedUserData` | ✅ |
+| `GetVerifierData` | ✅ |
+| `GetExtendedVerifierData` | ✅ |
+| `GetUnboundedVerifierData` | ✅ |
 | `GetPfpVerifierData` | ❌ |
 | `GetProfileData` | ❌ |
 | `GetStarkProfiles` | ❌ |
