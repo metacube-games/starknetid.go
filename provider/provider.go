@@ -229,13 +229,9 @@ func (p *Provider) GetUserData(
 		)
 	}
 
-	id, err := p.checkArguments(ctx, idDomainOrAddr)
+	idFelt, err := p.checkArguments(ctx, idDomainOrAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check arguments: %w", err)
-	}
-	idFelt, err := (&felt.Felt{}).SetString(id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert id %s: %w", id, err)
 	}
 
 	fieldFelt, err := utils.EncodeShortString(field)
@@ -246,7 +242,7 @@ func (p *Provider) GetUserData(
 	callData := []*felt.Felt{
 		idFelt,
 		fieldFelt,
-		(&felt.Felt{}).SetUint64(0),
+		(&felt.Felt{}).SetUint64(0), // domain: 0
 	}
 
 	tx := rpc.FunctionCall{
@@ -305,13 +301,9 @@ func (p *Provider) GetExtendedUserData(
 		)
 	}
 
-	id, err := p.checkArguments(ctx, idDomainOrAddr)
+	idFelt, err := p.checkArguments(ctx, idDomainOrAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check arguments: %w", err)
-	}
-	idFelt, err := (&felt.Felt{}).SetString(id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert id %s: %w", id, err)
 	}
 
 	fieldFelt, err := utils.EncodeShortString(field)
@@ -323,7 +315,7 @@ func (p *Provider) GetExtendedUserData(
 		idFelt,
 		fieldFelt,
 		(&felt.Felt{}).SetUint64(uint64(length)),
-		(&felt.Felt{}).SetUint64(0),
+		(&felt.Felt{}).SetUint64(0), // domain: 0
 	}
 
 	tx := rpc.FunctionCall{
@@ -377,13 +369,9 @@ func (p *Provider) GetUnboundedUserData(
 		)
 	}
 
-	id, err := p.checkArguments(ctx, idDomainOrAddr)
+	idFelt, err := p.checkArguments(ctx, idDomainOrAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check arguments: %w", err)
-	}
-	idFelt, err := (&felt.Felt{}).SetString(id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert id %s: %w", id, err)
 	}
 
 	fieldFelt, err := utils.EncodeShortString(field)
@@ -394,7 +382,7 @@ func (p *Provider) GetUnboundedUserData(
 	callData := []*felt.Felt{
 		idFelt,
 		fieldFelt,
-		(&felt.Felt{}).SetUint64(0),
+		(&felt.Felt{}).SetUint64(0), // domain: 0
 	}
 
 	tx := rpc.FunctionCall{
@@ -470,13 +458,9 @@ func (p *Provider) GetVerifierData(
 		)
 	}
 
-	id, err := p.checkArguments(ctx, idDomainOrAddr)
+	idFelt, err := p.checkArguments(ctx, idDomainOrAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check arguments: %w", err)
-	}
-	idFelt, err := (&felt.Felt{}).SetString(id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert id %s: %w", id, err)
 	}
 
 	fieldFelt, err := utils.EncodeShortString(field)
@@ -488,7 +472,7 @@ func (p *Provider) GetVerifierData(
 		idFelt,
 		fieldFelt,
 		verifierAddress,
-		(&felt.Felt{}).SetUint64(0),
+		(&felt.Felt{}).SetUint64(0), // domain: 0
 	}
 
 	tx := rpc.FunctionCall{
@@ -569,13 +553,9 @@ func (p *Provider) GetExtendedVerifierData(
 		)
 	}
 
-	id, err := p.checkArguments(ctx, idDomainOrAddr)
+	idFelt, err := p.checkArguments(ctx, idDomainOrAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check arguments: %w", err)
-	}
-	idFelt, err := (&felt.Felt{}).SetString(id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert id %s: %w", id, err)
 	}
 
 	fieldFelt, err := utils.EncodeShortString(field)
@@ -588,7 +568,7 @@ func (p *Provider) GetExtendedVerifierData(
 		fieldFelt,
 		(&felt.Felt{}).SetUint64(uint64(length)),
 		verifierAddress,
-		(&felt.Felt{}).SetUint64(0),
+		(&felt.Felt{}).SetUint64(0), // domain: 0
 	}
 
 	tx := rpc.FunctionCall{
@@ -664,13 +644,9 @@ func (p *Provider) GetUnboundedVerifierData(
 		)
 	}
 
-	id, err := p.checkArguments(ctx, idDomainOrAddr)
+	idFelt, err := p.checkArguments(ctx, idDomainOrAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check arguments: %w", err)
-	}
-	idFelt, err := (&felt.Felt{}).SetString(id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert id %s: %w", id, err)
 	}
 
 	fieldFelt, err := utils.EncodeShortString(field)
@@ -682,7 +658,7 @@ func (p *Provider) GetUnboundedVerifierData(
 		idFelt,
 		fieldFelt,
 		verifierAddress,
-		(&felt.Felt{}).SetUint64(0),
+		(&felt.Felt{}).SetUint64(0), // domain: 0
 	}
 
 	tx := rpc.FunctionCall{
@@ -701,16 +677,135 @@ func (p *Provider) GetUnboundedVerifierData(
 	return result[1:], nil
 }
 
-// // GetPfpVerifierData returns the profile picture verifier data for a given
-// // Starknet ID, domain or address.
-// func (p *Provider) GetPfpVerifierData(
-// 	ctx context.Context,
-// 	idDomainOrAddr string,
-// 	verifier *string,
-// ) (string, error) {
-// 	// TODO implement
-// 	return "", fmt.Errorf("not implemented")
-// }
+// GetPfpVerifierData returns the profile picture verifier data for a given
+// Starknet ID, domain or address.
+func (p *Provider) GetPfpVerifierData(
+	ctx context.Context,
+	idDomainOrAddr string,
+	verifier *string,
+) ([]*felt.Felt, error) {
+	var contract string
+	var err error
+	if p.StarknetIdContracts != nil &&
+		p.StarknetIdContracts.IdentityContract != "" {
+		contract = p.StarknetIdContracts.IdentityContract
+	} else if p.ChainId != "" {
+		contract, err = utils.GetIdentityContract(p.ChainId)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to get identity contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		return nil, fmt.Errorf(
+			"Provider not initialized with chainId or StarknetIdContracts",
+		)
+	}
+	contractAddress, err := NethermindEthUtils.HexToFelt(contract)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to convert contract address %s: %w",
+			contract,
+			err,
+		)
+	}
+
+	if verifier == nil {
+		contract, err = utils.GetPfpVerifierContract(p.ChainId)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to get verifier contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		contract = *verifier
+	}
+	verifierAddress, err := NethermindEthUtils.HexToFelt(contract)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to convert verifier address %s: %w",
+			*verifier,
+			err,
+		)
+	}
+
+	idFelt, err := p.checkArguments(ctx, idDomainOrAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check arguments: %w", err)
+	}
+
+	fieldFelt, err := utils.EncodeShortString("nft_pp_contract")
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to encode field %s: %w",
+			"nft_pp_contract",
+			err,
+		)
+	}
+
+	callData := []*felt.Felt{
+		idFelt,
+		fieldFelt,
+		verifierAddress,
+		(&felt.Felt{}).SetUint64(0), // domain: 0
+	}
+
+	tx := rpc.FunctionCall{
+		ContractAddress: contractAddress,
+		EntryPointSelector: NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_verifier_data",
+		),
+		Calldata: callData,
+	}
+
+	resultContractData, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if rpcErr != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	}
+
+	fieldFelt, err = utils.EncodeShortString("nft_pp_id")
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to encode field %s: %w",
+			"nft_pp_id",
+			err,
+		)
+	}
+
+	callData = []*felt.Felt{
+		idFelt,
+		fieldFelt,
+		(&felt.Felt{}).SetUint64(2), // length: 2
+		verifierAddress,
+		(&felt.Felt{}).SetUint64(0), // domain: 0
+	}
+
+	tx = rpc.FunctionCall{
+		ContractAddress: contractAddress,
+		EntryPointSelector: NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_extended_verifier_data",
+		),
+		Calldata: callData,
+	}
+
+	resultNftTokenData, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if rpcErr != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	}
+
+	return append(
+		[]*felt.Felt{(&felt.Felt{}).SetUint64(0)},
+		append(
+			resultContractData,
+			resultNftTokenData[1:]...,
+		)...,
+	), nil
+
+}
 
 // // GetExtendedPfpVerifierData returns the extended profile data for a given
 // // address.
@@ -830,19 +925,16 @@ func (p *Provider) tryResolveAddress(
 func (p *Provider) checkArguments(
 	ctx context.Context,
 	idDomainOrAddr string,
-) (string, error) {
+) (*felt.Felt, error) {
 	if _, err := strconv.Atoi(idDomainOrAddr); err == nil {
-		return idDomainOrAddr, nil
+		return (&felt.Felt{}).SetString(idDomainOrAddr)
 	}
 	if utils.IsStarkDomain(idDomainOrAddr) {
-		id, err := p.GetStarknetId(
-			ctx,
-			idDomainOrAddr,
-		)
+		id, err := p.GetStarknetId(ctx, idDomainOrAddr)
 		if err != nil {
-			return "", fmt.Errorf("failed to get Starknet ID: %w", err)
+			return nil, fmt.Errorf("failed to get Starknet ID: %w", err)
 		}
-		return id, nil
+		return (&felt.Felt{}).SetString(id)
 	}
 	matched, _ := regexp.MatchString(`^[-+]?0x[0-9a-f]+$`, idDomainOrAddr)
 	if matched {
@@ -852,10 +944,14 @@ func (p *Provider) checkArguments(
 			idDomainOrAddr,
 		)
 		if err != nil {
-			return "", fmt.Errorf("failed to get Stark name: %w", err)
+			return nil, fmt.Errorf("failed to get Stark name: %w", err)
 		}
-		return p.GetStarknetId(ctx, domain)
+		id, err := p.GetStarknetId(ctx, domain)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get Starknet ID: %w", err)
+		}
+		return (&felt.Felt{}).SetString(id)
 	} else {
-		return "", fmt.Errorf("invalid idDomainOrAddr")
+		return nil, fmt.Errorf("invalid idDomainOrAddr")
 	}
 }

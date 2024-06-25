@@ -15,10 +15,14 @@ const (
 	METACUBE_DOMAIN    = "metacube.stark"
 	METACUBE_ID        = "899148099505"
 	METACUBE_NAME_DATA = "0x4c81b30ba350e0b28880951cb656abc37cfd78b343d993af79edd6f13d96905"
+
+	FRICOBEN_DOMAIN          = "fricoben.stark"
+	FRICOBEN_NFT_PP_CONTRACT = "0x3ab1124ef9ec3a2f2b1d9838f9066f9a894483d40b33390dda8d85c01a315a3"
 )
 
 var (
-	METACUBE_NAME_VERIFIER_CONTRACT = "0x06ac597f8116f886fa1c97a23fa4e08299975ecaf6b598873ca6792b9bbfb678"
+	METACUBE_NAME_VERIFIER_CONTRACT   = "0x06ac597f8116f886fa1c97a23fa4e08299975ecaf6b598873ca6792b9bbfb678"
+	FRICOBEN_NFT_PP_CONTRACT_VERIFIER = "0x070aaa20ec4a46da57c932d9fd89ca5e6bb9ca3188d3df361a32306aff7d59c7"
 )
 
 func createProvider() (*Provider, error) {
@@ -285,6 +289,50 @@ func TestGetUnboundedVerifierData(t *testing.T) {
 			"Expected %s but got %s",
 			METACUBE_NAME_DATA,
 			unboundedVerifierData[0].String(),
+		)
+	}
+}
+
+func TestGetPfpVerifierData(t *testing.T) {
+	p, err := createProvider()
+	if err != nil {
+		t.Error(err)
+	}
+
+	pfpVerifierData, err := p.GetPfpVerifierData(
+		context.Background(),
+		FRICOBEN_DOMAIN,
+		&FRICOBEN_NFT_PP_CONTRACT_VERIFIER,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(pfpVerifierData) != 4 {
+		t.Errorf("Expected 4 but got %d", len(pfpVerifierData))
+	}
+	if pfpVerifierData[0].String() != "0x0" {
+		t.Errorf(
+			"Expected empty string but got %s",
+			pfpVerifierData[0].String(),
+		)
+	}
+	if pfpVerifierData[1].String() != FRICOBEN_NFT_PP_CONTRACT {
+		t.Errorf(
+			"Expected %s but got %s",
+			FRICOBEN_NFT_PP_CONTRACT,
+			pfpVerifierData[1].String(),
+		)
+	}
+	if pfpVerifierData[2].String() != "0x1b99" {
+		t.Errorf(
+			"Expected 0x1b99 but got %s",
+			pfpVerifierData[2].String(),
+		)
+	}
+	if pfpVerifierData[3].String() != "0x0" {
+		t.Errorf(
+			"Expected empty string but got %s",
+			pfpVerifierData[3].String(),
 		)
 	}
 }

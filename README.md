@@ -78,7 +78,7 @@ The library is still in development and not all features are implemented yet
 | `GetVerifierData` | ✅ |
 | `GetExtendedVerifierData` | ✅ |
 | `GetUnboundedVerifierData` | ✅ |
-| `GetPfpVerifierData` | ❌ |
+| `GetPfpVerifierData` | ✅ |
 | `GetProfileData` | ❌ |
 | `GetStarkProfiles` | ❌ |
 
