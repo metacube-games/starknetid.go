@@ -21,7 +21,7 @@
 
 <h1 align="center">Starknetid.go</h1>
 
-Starknetid.go is an unofficial Go library to interact with the [Starknet.id](https://starknet.id/) protocol. The implementation is inspired by the official Javascript library [Starknetid.js](https://github.com/starknet-id/starknetid.js).
+Starknetid.go is a Go library to interact with the [Starknet.id](https://starknet.id/) protocol. The implementation is inspired by the official Javascript library [Starknetid.js](https://github.com/starknet-id/starknetid.js).
 
 Starknetid.go is powered by [Starknet.go](https://github.com/NethermindEth/starknet.go).
 
