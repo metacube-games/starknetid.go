@@ -62,6 +62,10 @@ println("Address of metacube.stark:", address)
 
 Please refer to the [examples](examples/main.go) for more usage examples.
 
+## Documentation
+
+The library is documented using GoDoc. You can find the documentation [here](https://pkg.go.dev/github.com/metacube-games/starknetid.go).
+
 ## Features
 
 The library is still in development and not all features are implemented yet

@@ -158,6 +158,10 @@ func TestSpecialCases(t *testing.T) {
 			utils.DecodeDomain(encoded),
 		)
 	}
+	decoded = utils.DecodeDomain(nil)
+	if decoded != "" {
+		t.Errorf("Expected empty string but got %s", decoded)
+	}
 }
 
 func TestIsStarkDomain(t *testing.T) {
