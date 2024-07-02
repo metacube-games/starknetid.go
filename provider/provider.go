@@ -593,6 +593,11 @@ func (p *Provider) GetVerifierData(
 //   - length: the length of the data.
 //   - verifier: the verifier contract address. If nil, it will try to fetch the
 //     verifier contract from the chain ID.
+//
+// Returns:
+//   - []*felt.Felt: the extended verifier data.
+//   - error: an error if the Starknet ID, domain or address is invalid or the
+//     extended verifier data could not be fetched.
 func (p *Provider) GetExtendedVerifierData(
 	ctx context.Context,
 	idDomainOrAddr string,
