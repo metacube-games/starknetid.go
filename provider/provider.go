@@ -14,6 +14,7 @@ import (
 	"github.com/metacube-games/starknetid.go/utils"
 )
 
+// Provider is a Starknet ID provider.
 type Provider struct {
 	Client              *rpc.Provider
 	ChainId             types.StarknetChainId
@@ -21,6 +22,18 @@ type Provider struct {
 }
 
 // NewProvider creates a new Provider instance.
+//
+// Parameters:
+//   - provider: the RPC provider.
+//   - chainId: the Starknet chain ID.
+//   - starknetIdContracts: the Starknet ID contracts. If nil, it will try to
+//     fetch the identity and naming contracts from the chain ID.
+//
+// Returns:
+//   - *Provider: the new Provider instance.
+//   - error: an error if the provider is nil, the chain ID is empty or the
+//     contracts are nil and the identity or naming contracts could not be
+//     fetched.
 func NewProvider(
 	provider *rpc.Provider,
 	chainId types.StarknetChainId,
@@ -65,6 +78,15 @@ func NewProvider(
 }
 
 // GetAddressFromStarknetId returns the address for a given .stark domain.
+//
+// Parameters:
+//   - ctx: the context.
+//   - domain: the .stark domain (.stark suffix is optional).
+//
+// Returns:
+//   - string: the address.
+//   - error: an error if the domain is invalid or the address could not be
+//     resolved.
 func (p *Provider) GetAddressFromStarkName(
 	ctx context.Context,
 	domain string,
@@ -99,6 +121,15 @@ func (p *Provider) GetAddressFromStarkName(
 }
 
 // GetStarkName returns the .stark domain for a given address.
+//
+// Parameters:
+//   - ctx: the context.
+//   - address: the address.
+//
+// Returns:
+//   - string: the .stark domain.
+//   - error: an error if the address is invalid or the domain could not be
+//     resolved.
 func (p *Provider) GetStarkName(
 	ctx context.Context,
 	address string,
@@ -138,6 +169,15 @@ func (p *Provider) GetStarkName(
 // }
 
 // GetStarknetId returns the Starknet ID for a given .stark domain.
+//
+// Parameters:
+//   - ctx: the context.
+//   - domain: the .stark domain (.stark suffix is optional).
+//
+// Returns:
+//   - string: the Starknet ID.
+//   - error: an error if the domain is invalid or the Starknet ID could not be
+//     resolved.
 func (p *Provider) GetStarknetId(
 	ctx context.Context,
 	domain string,
@@ -196,6 +236,17 @@ func (p *Provider) GetStarknetId(
 }
 
 // GetUserData returns the user data for a given Starknet ID, domain or address.
+//
+// Parameters:
+//   - ctx: the context.
+//   - idDomainOrAddr: the Starknet ID, .stark domain (.stark suffix is
+//     optional) or address.
+//   - field: the field name.
+//
+// Returns:
+//   - *felt.Felt: the user data.
+//   - error: an error if the Starknet ID, domain or address is invalid or the
+//     user data could not be fetched.
 func (p *Provider) GetUserData(
 	ctx context.Context,
 	idDomainOrAddr string,
@@ -267,6 +318,18 @@ func (p *Provider) GetUserData(
 
 // GetExtendedUserData returns the extended user data for a given Starknet ID,
 // domain or address.
+//
+// Parameters:
+//   - ctx: the context.
+//   - idDomainOrAddr: the Starknet ID, .stark domain (.stark suffix is
+//     optional) or address.
+//   - field: the field name.
+//   - length: the length of the data.
+//
+// Returns:
+//   - []*felt.Felt: the extended user data.
+//   - error: an error if the Starknet ID, domain or address is invalid or the
+//     extended user data could not be fetched.
 func (p *Provider) GetExtendedUserData(
 	ctx context.Context,
 	idDomainOrAddr string,
@@ -336,6 +399,17 @@ func (p *Provider) GetExtendedUserData(
 
 // GetUnboundedUserData returns the unbounded user data for a given Starknet ID,
 // domain or address.
+//
+// Parameters:
+//   - ctx: the context.
+//   - idDomainOrAddr: the Starknet ID, .stark domain (.stark suffix is
+//     optional) or address.
+//   - field: the field name.
+//
+// Returns:
+//   - []*felt.Felt: the unbounded user data.
+//   - error: an error if the Starknet ID, domain or address is invalid or the
+//     unbounded user data could not be fetched.
 func (p *Provider) GetUnboundedUserData(
 	ctx context.Context,
 	idDomainOrAddr string,
@@ -403,6 +477,19 @@ func (p *Provider) GetUnboundedUserData(
 
 // GetVerifierData returns the verifier data for a given Starknet ID, domain or
 // address.
+//
+// Parameters:
+//   - ctx: the context.
+//   - idDomainOrAddr: the Starknet ID, .stark domain (.stark suffix is
+//     optional) or address.
+//   - field: the field name.
+//   - verifier: the verifier contract address. If nil, it will try to fetch the
+//     verifier contract from the chain ID.
+//
+// Returns:
+//   - *felt.Felt: the verifier data.
+//   - error: an error if the Starknet ID, domain or address is invalid or the
+//     verifier data could not be fetched.
 func (p *Provider) GetVerifierData(
 	ctx context.Context,
 	idDomainOrAddr string,
@@ -497,6 +584,15 @@ func (p *Provider) GetVerifierData(
 
 // GetExtendedVerifierData returns the extended verifier data for a given
 // Starknet ID, domain or address.
+//
+// Parameters:
+//   - ctx: the context.
+//   - idDomainOrAddr: the Starknet ID, .stark domain (.stark suffix is
+//     optional) or address.
+//   - field: the field name.
+//   - length: the length of the data.
+//   - verifier: the verifier contract address. If nil, it will try to fetch the
+//     verifier contract from the chain ID.
 func (p *Provider) GetExtendedVerifierData(
 	ctx context.Context,
 	idDomainOrAddr string,
@@ -589,6 +685,19 @@ func (p *Provider) GetExtendedVerifierData(
 
 // GetUnboundedVerifierData returns the unbounded verifier data for a given
 // Starknet ID, domain or address.
+//
+// Parameters:
+//   - ctx: the context.
+//   - idDomainOrAddr: the Starknet ID, .stark domain (.stark suffix is
+//     optional) or address.
+//   - field: the field name.
+//   - verifier: the verifier contract address. If nil, it will try to fetch the
+//     verifier contract from the chain ID.
+//
+// Returns:
+//   - []*felt.Felt: the unbounded verifier data.
+//   - error: an error if the Starknet ID, domain or address is invalid or the
+//     unbounded verifier data could not be fetched.
 func (p *Provider) GetUnboundedVerifierData(
 	ctx context.Context,
 	idDomainOrAddr string,
@@ -679,6 +788,18 @@ func (p *Provider) GetUnboundedVerifierData(
 
 // GetPfpVerifierData returns the profile picture verifier data for a given
 // Starknet ID, domain or address.
+//
+// Parameters:
+//   - ctx: the context.
+//   - idDomainOrAddr: the Starknet ID, .stark domain (.stark suffix is
+//     optional) or address.
+//   - verifier: the verifier contract address. If nil, it will try to fetch the
+//     verifier contract from the chain ID.
+//
+// Returns:
+//   - []*felt.Felt: the profile picture verifier data.
+//   - error: an error if the Starknet ID, domain or address is invalid or the
+//     profile picture verifier data could not be fetched.
 func (p *Provider) GetPfpVerifierData(
 	ctx context.Context,
 	idDomainOrAddr string,
@@ -833,6 +954,16 @@ func (p *Provider) GetPfpVerifierData(
 // }
 
 // tryResolveDomain tries to resolve a .stark domain to an address.
+//
+// Parameters:
+//   - ctx: the context.
+//   - contract: the contract address.
+//   - encodedDomain: the encoded domain.
+//   - hint: the hint.
+//
+// Returns:
+//   - string: the address.
+//   - error: an error if the address could not be resolved.
 func (p *Provider) tryResolveDomain(
 	ctx context.Context,
 	contract string,
@@ -872,6 +1003,16 @@ func (p *Provider) tryResolveDomain(
 }
 
 // tryResolveAddress tries to resolve an address to a .stark domain.
+//
+// Parameters:
+//   - ctx: the context.
+//   - contract: the contract address.
+//   - address: the address.
+//   - hint: the hint.
+//
+// Returns:
+//   - string: the .stark domain.
+//   - error: an error if the domain could not be resolved.
 func (p *Provider) tryResolveAddress(
 	ctx context.Context,
 	contract string,
@@ -922,6 +1063,15 @@ func (p *Provider) tryResolveAddress(
 
 // checkArguments checks if the given idDomainOrAddr is a Starknet ID, .stark
 // domain or address.
+//
+// Parameters:
+//   - ctx: the context.
+//   - idDomainOrAddr: the Starknet ID, .stark domain (.stark suffix is
+//     optional) or address.
+//
+// Returns:
+//   - *felt.Felt: the Starknet ID.
+//   - error: an error if the idDomainOrAddr is invalid.
 func (p *Provider) checkArguments(
 	ctx context.Context,
 	idDomainOrAddr string,

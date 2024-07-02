@@ -57,7 +57,7 @@ address, err := provider.GetAddressFromStarkName(context.Background(), "metacube
 if err != nil {
   panic(err)
 }
-println("Address of metacube.stark:", address)
+fmt.Printf("Address of metacube.stark: %s", address)
 ```
 
 Please refer to the [examples](examples/main.go) for more usage examples.

@@ -15,10 +15,11 @@ import (
 // GetIdentityContract returns the identity contract address for a given chain.
 //
 // Parameters:
-// - chainId: The chain ID.
+//   - chainId: The chain ID.
+//
 // Returns:
-// - The identity contract address.
-// - An error if the identity contract is not deployed on the chain.
+//   - string: The identity contract address.
+//   - error: An error if the identity contract is not deployed on the chain.
 func GetIdentityContract(chainId types.StarknetChainId) (string, error) {
 	switch chainId {
 	case constants.SN_MAIN:
@@ -36,10 +37,11 @@ func GetIdentityContract(chainId types.StarknetChainId) (string, error) {
 // GetNamingContract returns the naming contract address for a given chain.
 //
 // Parameters:
-// - chainId: The chain ID.
+//   - chainId: The chain ID.
+//
 // Returns:
-// - The naming contract address.
-// - An error if the naming contract is not deployed on the chain.
+//   - string: The naming contract address.
+//   - error: An error if the naming contract is not deployed on the chain.
 func GetNamingContract(chainId types.StarknetChainId) (string, error) {
 	switch chainId {
 	case constants.SN_MAIN:
@@ -57,10 +59,11 @@ func GetNamingContract(chainId types.StarknetChainId) (string, error) {
 // GetVerifierContract returns the verifier contract address for a given chain.
 //
 // Parameters:
-// - chainId: The chain ID.
+//   - chainId: The chain ID.
+//
 // Returns:
-// - The verifier contract address.
-// - An error if the verifier contract is not deployed on the chain.
+//   - string: The verifier contract address.
+//   - error: An error if the verifier contract is not deployed on the chain.
 func GetVerifierContract(chainId types.StarknetChainId) (string, error) {
 	switch chainId {
 	case constants.SN_MAIN:
@@ -79,11 +82,12 @@ func GetVerifierContract(chainId types.StarknetChainId) (string, error) {
 // for a given chain.
 //
 // Parameters:
-// - chainId: The chain ID.
+//   - chainId: The chain ID.
+//
 // Returns:
-//   - The profile picture verifier contract address.
-//   - An error if the profile picture verifier contract is not deployed on the
-//     chain.
+//   - string: The profile picture verifier contract address.
+//   - error: An error if the profile picture verifier contract is not deployed
+//     on the chain.
 func GetPfpVerifierContract(chainId types.StarknetChainId) (string, error) {
 	switch chainId {
 	case constants.SN_MAIN:
@@ -102,11 +106,12 @@ func GetPfpVerifierContract(chainId types.StarknetChainId) (string, error) {
 // address for a given chain.
 //
 // Parameters:
-// - chainId: The chain ID.
+//   - chainId: The chain ID.
+//
 // Returns:
-//   - The proof of personhood verifier contract address.
-//   - An error if the proof of personhood verifier contract is not deployed on
-//     the chain.
+//   - string: The proof of personhood verifier contract address.
+//   - error: An error if the proof of personhood verifier contract is not
+//     deployed on the chain.
 func GetPopVerifierContract(chainId types.StarknetChainId) (string, error) {
 	switch chainId {
 	case constants.SN_MAIN:
@@ -125,10 +130,11 @@ func GetPopVerifierContract(chainId types.StarknetChainId) (string, error) {
 // chain.
 //
 // Parameters:
-// - chainId: The chain ID.
+//   - chainId: The chain ID.
+//
 // Returns:
-// - The multicall contract address.
-// - An error if the multicall contract is not deployed on the chain.
+//   - string: The multicall contract address.
+//   - error: An error if the multicall contract is not deployed on the chain.
 func GetMulticallContract(chainId types.StarknetChainId) (string, error) {
 	switch chainId {
 	case constants.SN_MAIN:
@@ -147,10 +153,12 @@ func GetMulticallContract(chainId types.StarknetChainId) (string, error) {
 // given chain.
 //
 // Parameters:
-// - chainId: The chain ID.
+//   - chainId: The chain ID.
+//
 // Returns:
-// - The utils multicall contract address.
-// - An error if the utils multicall contract is not deployed on the chain.
+//   - string: The utils multicall contract address.
+//   - error: An error if the utils multicall contract is not deployed on the
+//     chain.
 func GetUtilsMulticallContract(chainId types.StarknetChainId) (string, error) {
 	switch chainId {
 	case constants.SN_MAIN:
@@ -169,10 +177,11 @@ func GetUtilsMulticallContract(chainId types.StarknetChainId) (string, error) {
 // GetBlobbertContract returns the blobbert contract address for a given chain.
 //
 // Parameters:
-// - chainId: The chain ID.
+//   - chainId: The chain ID.
+//
 // Returns:
-// - The blobbert contract address.
-// - An error if the blobbert contract is not deployed on the chain.
+//   - string: The blobbert contract address.
+//   - error: An error if the blobbert contract is not deployed on the chain.
 func GetBlobbertContract(chainId types.StarknetChainId) (string, error) {
 	switch chainId {
 	case constants.SN_MAIN:
@@ -188,18 +197,19 @@ func GetBlobbertContract(chainId types.StarknetChainId) (string, error) {
 // DecodeDomain decodes a starknet.id domain from a list of felt.
 //
 // Parameters:
-// - encoded: The encoded domain.
+//   - encoded: The encoded domain.
+//
 // Returns:
-// - The decoded domain.
+//   - string: The decoded domain.
 //
 // Examples:
-// - DecodeDomain(nil) -> ""
-// - DecodeDomain([felt_0]) -> ""
-// - DecodeDomain([felt_abc]) -> "abc.stark"
-// - DecodeDomain([felt_def]) -> "def.stark"
-// - DecodeDomain([felt_ghi]) -> "ghi.stark"
-// - DecodeDomain([felt_abc, felt_def]) -> "abc.def.stark"
-// - DecodeDomain([felt_abc, felt_def, felt_ghi]) -> "abc.def.ghi.stark"
+//   - DecodeDomain(nil) => ""
+//   - DecodeDomain([felt_0]) => ""
+//   - DecodeDomain([felt_abc]) => "abc.stark"
+//   - DecodeDomain([felt_def]) => "def.stark"
+//   - DecodeDomain([felt_ghi]) => "ghi.stark"
+//   - DecodeDomain([felt_abc, felt_def]) => "abc.def.stark"
+//   - DecodeDomain([felt_abc, felt_def, felt_ghi]) => "abc.def.ghi.stark"
 func DecodeDomain(encoded []*felt.Felt) string {
 	var decoded strings.Builder
 
@@ -222,20 +232,21 @@ func DecodeDomain(encoded []*felt.Felt) string {
 // per subdomain.
 //
 // Parameters:
-// - domain: The domain to encode (.stark suffix is optional).
+//   - domain: The domain to encode (.stark suffix is optional).
+//
 // Returns:
-// - The encoded domain.
-// - An error if the encoding fails.
+//   - []*felt.Felt: The encoded domain.
+//   - error: An error if the encoding fails.
 //
 // Examples:
-// - EncodeDomain("") -> [felt_0]
-// - EncodeDomain("abc.stark") -> [felt_abc]
-// - EncodeDomain("abc") -> [felt_abc]
-// - EncodeDomain("def.stark") -> [felt_def]
-// - EncodeDomain("ghi.stark") -> [felt_ghi]
-// - EncodeDomain("abc.def.stark") -> [felt_abc, felt_def]
-// - EncodeDomain("abc.def.ghi.stark") -> [felt_abc, felt_def, felt_ghi]
-// - EncodeDomain("αβγ.stark") -> error failed to encode subdomain αβγ: invalid character α
+//   - EncodeDomain("") => [felt_0]
+//   - EncodeDomain("abc.stark") => [felt_abc]
+//   - EncodeDomain("abc") => [felt_abc]
+//   - EncodeDomain("def.stark") => [felt_def]
+//   - EncodeDomain("ghi.stark") => [felt_ghi]
+//   - EncodeDomain("abc.def.stark") => [felt_abc, felt_def]
+//   - EncodeDomain("abc.def.ghi.stark") => [felt_abc, felt_def, felt_ghi]
+//   - EncodeDomain("αβγ.stark") => error failed to encode subdomain αβγ: invalid character α
 func EncodeDomain(domain string) ([]*felt.Felt, error) {
 	if domain == "" {
 		return []*felt.Felt{(&felt.Felt{}).SetUint64(0)}, nil
@@ -261,15 +272,16 @@ func EncodeDomain(domain string) ([]*felt.Felt, error) {
 // encoding/deconding algorithm.
 //
 // Parameters:
-// - encodedSubdomain: The encoded subdomain.
+//   - encodedSubdomain: The encoded subdomain.
+//
 // Returns:
-// - The decoded subdomain.
+//   - string: The decoded subdomain.
 //
 // Examples:
-// - decode(nil) -> ""
-// - decode(felt_0) -> ""
-// - decode(felt_abc) -> "abc"
-// - decode(felt_def) -> "def"
+//   - decode(nil) => ""
+//   - decode(felt_0) => ""
+//   - decode(felt_abc) => "abc"
+//   - decode(felt_def) => "def"
 func decode(encodedSubdomain *felt.Felt) string {
 	// NOTE: The use of BigInt is necessary since the Felt type does not have
 	// a method to get the modulo of a Felt. Furthermore, the division of a Felt
@@ -360,15 +372,16 @@ func decode(encodedSubdomain *felt.Felt) string {
 // algorithm.
 //
 // Parameters:
-// - subdomain: The subdomain to encode.
+//   - subdomain: The subdomain to encode.
+//
 // Returns:
-// - The encoded subdomain.
-// - An error if the encoding fails.
+//   - *felt.Felt: The encoded subdomain.
+//   - error: An error if the encoding fails.
 //
 // Examples:
-// - encode("abc") -> felt_abc
-// - encode("def") -> felt_def
-// - encode("αβγ") -> error invalid character α
+//   - encode("abc") => felt_abc
+//   - encode("def") => felt_def
+//   - encode("αβγ") => error invalid character α
 func encode(subdomain string) (*felt.Felt, error) {
 	v := []rune(subdomain)
 	encoded := &felt.Felt{}
@@ -466,10 +479,12 @@ func encode(subdomain string) (*felt.Felt, error) {
 // runeIndex returns the index of a rune in a slice of runes.
 //
 // Parameters:
-// - runes: The slice of runes.
-// - r: The rune to find.
+//   - runes: The slice of runes.
+//   - r: The rune to find.
+//
 // Returns:
-// - The index of the rune in the slice or -1 if the rune is not in the slice.
+//   - int: The index of the rune in the slice or -1 if the rune is not in the
+//     slice.
 func runeIndex(runes []rune, r rune) int {
 	for i, v := range runes {
 		if v == r {
@@ -482,10 +497,11 @@ func runeIndex(runes []rune, r rune) int {
 // extractToCome removes the trailing '来' (toCome) from a string.
 //
 // Parameters:
-// - str: The string to remove the trailing '来' from.
+//   - str: The string to remove the trailing '来' from.
+//
 // Returns:
-// - The string without the trailing '来'.
-// - The number of '来' removed.
+//   - string: The string without the trailing '来'.
+//   - int: The number of '来' removed.
 func extractToCome(str string) (string, int) {
 	k := 0
 	for strings.HasSuffix(
@@ -503,9 +519,10 @@ func extractToCome(str string) (string, int) {
 // `^(?:[a-z0-9-]{1,48}(?:[a-z0-9-]{1,48}[a-z0-9-])?\.)*[a-z0-9-]{1,48}\.stark$`
 //
 // Parameters:
-// - domain: The domain to check.
+//   - domain: The domain to check.
+//
 // Returns:
-// - True if the domain is a starknet.id domain, false otherwise.
+//   - bool: True if the domain is a starknet.id domain, false otherwise.
 func IsStarkDomain(domain string) bool {
 	match, _ := regexp.MatchString(
 		`^(?:[a-z0-9-]{1,48}(?:[a-z0-9-]{1,48}[a-z0-9-])?\.)*[a-z0-9-]{1,48}\.stark$`,
@@ -519,9 +536,10 @@ func IsStarkDomain(domain string) bool {
 // `^([a-z0-9-]){1,48}\.stark$`
 //
 // Parameters:
-// - domain: The domain to check.
+//   - domain: The domain to check.
+//
 // Returns:
-// - True if the domain is a stark root domain, false otherwise.
+//   - bool: True if the domain is a stark root domain, false otherwise.
 func IsStarkRootDomain(domain string) bool {
 	match, _ := regexp.MatchString(
 		`^([a-z0-9-]){1,48}\.stark$`,
@@ -533,9 +551,10 @@ func IsStarkRootDomain(domain string) bool {
 // IsSubdomain checks if a domain is a subdomain.
 //
 // Parameters:
-// - subdomain: The domain to check.
+//   - subdomain: The domain to check.
+//
 // Returns:
-// - True if the domain is a subdomain, false otherwise.
+//   - bool: True if the domain is a subdomain, false otherwise.
 func IsSubdomain(subdomain string) bool {
 	return !(subdomain == "") && strings.Count(subdomain, ".") > 1
 }
@@ -545,9 +564,10 @@ func IsSubdomain(subdomain string) bool {
 // `^([a-z0-9-]){1,48}\.braavos\.stark$`
 //
 // Parameters:
-// - domain: The domain to check.
+//   - domain: The domain to check.
+//
 // Returns:
-// - True if the domain is a Braavos subdomain, false otherwise.
+//   - bool: True if the domain is a Braavos subdomain, false otherwise.
 func IsBraavosSubdomain(domain string) bool {
 	match, _ := regexp.MatchString(
 		`^([a-z0-9-]){1,48}\.braavos\.stark$`,
@@ -561,9 +581,10 @@ func IsBraavosSubdomain(domain string) bool {
 // `^([a-z0-9-]){1,48}\.xplorer\.stark$`
 //
 // Parameters:
-// - domain: The domain to check.
+//   - domain: The domain to check.
+//
 // Returns:
-// - True if the domain is an xplorer subdomain, false otherwise.
+//   - bool: True if the domain is an xplorer subdomain, false otherwise.
 func IsXplorerSubdomain(domain string) bool {
 	match, _ := regexp.MatchString(
 		`^([a-z0-9-]){1,48}\.xplorer\.stark$`,
@@ -575,9 +596,10 @@ func IsXplorerSubdomain(domain string) bool {
 // FmtFeltArrayCallData formats an array call data: [len(callData), callData...]
 //
 // Parameters:
-// - callData: The call data to format.
+//   - callData: The call data to format.
+//
 // Returns:
-// - The formatted call data.
+//   - []*felt.Felt: The formatted call data.
 func FmtFeltArrayCallData(callData []*felt.Felt) []*felt.Felt {
 	return append(
 		[]*felt.Felt{(&felt.Felt{}).SetUint64(uint64(len(callData)))},
@@ -588,9 +610,10 @@ func FmtFeltArrayCallData(callData []*felt.Felt) []*felt.Felt {
 // IsASCII checks if a string contains only ASCII characters.
 //
 // Parameters:
-// - str: The string to check.
+//   - str: The string to check.
+//
 // Returns:
-// - True if the string contains only ASCII characters, false otherwise.
+//   - bool: True if the string contains only ASCII characters, false otherwise.
 func IsASCII(str string) bool {
 	asciiRegex := regexp.MustCompile(`^[\x00-\x7F]*$`)
 	return asciiRegex.MatchString(str)
@@ -599,9 +622,10 @@ func IsASCII(str string) bool {
 // IsShortString checks if the length of a string is valid for a short string.
 //
 // Parameters:
-// - str: The string to check.
+//   - str: The string to check.
+//
 // Returns:
-// - True if the string is a short string, false otherwise.
+//   - bool: True if the string is a short string, false otherwise.
 func IsShortString(str string) bool {
 	return len(str) <= constants.TEXT_TO_FELT_MAX_LEN
 }
@@ -609,9 +633,10 @@ func IsShortString(str string) bool {
 // AddHexPrefix adds the "0x" prefix to a string if it does not already have it.
 //
 // Parameters:
-// - str: The string to add the prefix to.
+//   - str: The string to add the prefix to.
+//
 // Returns:
-// - The string with the "0x" prefix.
+//   - string: The string with the "0x" prefix.
 func AddHexPrefix(str string) string {
 	if strings.HasPrefix(str, "0x") {
 		return str
@@ -623,10 +648,11 @@ func AddHexPrefix(str string) string {
 // "0x" prefix.
 //
 // Parameters:
-// - str: The string to encode.
+//   - str: The string to encode.
+//
 // Returns:
-// - The encoded string.
-// - An error if the string is not an ASCII string or is too long.
+//   - *felt.Felt: The encoded string.
+//   - error: An error if the string is not an ASCII string or is too long.
 func EncodeShortString(str string) (*felt.Felt, error) {
 	if !IsASCII(str) {
 		return nil, fmt.Errorf("%s is not an ASCII string", str)
