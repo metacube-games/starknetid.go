@@ -64,7 +64,7 @@ Please refer to the [examples](examples/main.go) for more usage examples.
 
 ## Documentation
 
-The library is documented using GoDoc. You can find the documentation [here](https://pkg.go.dev/github.com/metacube-games/starknetid.go).
+The library is documented using GoDoc, you can find the documentation [here](https://pkg.go.dev/github.com/metacube-games/starknetid.go). Moreover, you can also refer to the documentation on the [starknet.id doc website](https://docs.starknet.id/devs/starknetidgo) where there are code examples for each methods.
 
 ## Features
 
