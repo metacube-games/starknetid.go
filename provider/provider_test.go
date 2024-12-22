@@ -16,8 +16,12 @@ const (
 	METACUBE_ID        = "899148099505"
 	METACUBE_NAME_DATA = "0x4c81b30ba350e0b28880951cb656abc37cfd78b343d993af79edd6f13d96905"
 
+	FRICOBEN_ADDRESS         = "0x061b6c0a78f9edf13cea17b50719f3344533fadd470b8cb29c2b4318014f52d3"
 	FRICOBEN_DOMAIN          = "fricoben.stark"
 	FRICOBEN_NFT_PP_CONTRACT = "0x3ab1124ef9ec3a2f2b1d9838f9066f9a894483d40b33390dda8d85c01a315a3"
+
+	TEST_BRAAVOS_ADDRESS = "0x0191ae0a520af918d4e218e254946f67486f090f4c52411476544c7a4471f6d2"
+	TEST_BRAAVOS_DOMAIN  = "test.braavos.stark"
 )
 
 var (
@@ -102,7 +106,54 @@ func TestGetStarkName(t *testing.T) {
 		t.Error(err)
 	}
 	if starkName != METACUBE_DOMAIN {
-		t.Errorf("Expected metacube.stark but got %s", starkName)
+		t.Errorf("Expected %s but got %s", METACUBE_DOMAIN, starkName)
+	}
+}
+
+func TestGetStarkNames(t *testing.T) {
+	p, err := createProvider()
+	if err != nil {
+		t.Error(err)
+	}
+
+	starkNames, err := p.GetStarkNames(
+		context.Background(),
+		[]string{METACUBE_ADDRESS, TEST_BRAAVOS_ADDRESS},
+		nil,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(starkNames) != 2 {
+		t.Errorf("Expected 2 but got %d", len(starkNames))
+	}
+	if starkNames[0] != METACUBE_DOMAIN {
+		t.Errorf("Expected %s but got %s", METACUBE_DOMAIN, starkNames[0])
+	}
+	if starkNames[1] != TEST_BRAAVOS_DOMAIN {
+		t.Errorf("Expected %s but got %s", TEST_BRAAVOS_DOMAIN, starkNames[1])
+	}
+
+	starkNames, err = p.GetStarkNames(
+		context.Background(),
+		[]string{
+			// random address with no stark name
+			"0x0302de76464d4e2447F2d1831fb0A1AF101B18F80964fCfff1aD831C0A92e1fD",
+			TEST_BRAAVOS_ADDRESS,
+		},
+		nil,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(starkNames) != 2 {
+		t.Errorf("Expected 2 but got %d", len(starkNames))
+	}
+	if starkNames[0] != "" {
+		t.Errorf("Expected empty string but got %s", starkNames[0])
+	}
+	if starkNames[1] != TEST_BRAAVOS_DOMAIN {
+		t.Errorf("Expected %s but got %s", TEST_BRAAVOS_DOMAIN, starkNames[1])
 	}
 }
 

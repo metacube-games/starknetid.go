@@ -158,15 +158,149 @@ func (p *Provider) GetStarkName(
 	return p.tryResolveAddress(ctx, contract, address, []*felt.Felt{})
 }
 
-// // GetStarkNames returns the .stark domains for a given list of addresses.
-// func (p *Provider) GetStarkNames(
-// 	ctx context.Context,
-// 	addresses []string,
-// 	multicallContract string,
-// ) ([]string, error) {
-// 	// TODO implement
-// 	return nil, fmt.Errorf("not implemented")
-// }
+// GetStarkNames returns the .stark domains for a given list of addresses.
+//
+// Parameters:
+//   - ctx: the context.
+//   - addresses: the addresses.
+//   - multicall: the multicall contract address. If nil, it will try to fetch
+//     the multicall contract from the chain ID.
+//
+// Returns:
+//   - []string: the .stark domains.
+//   - error: an error if the addresses are invalid or the domains could not be
+//     resolved.
+func (p *Provider) GetStarkNames(
+	ctx context.Context,
+	addresses []string,
+	multicall *string,
+) ([]string, error) {
+	var contract string
+	var err error
+	if p.StarknetIdContracts != nil &&
+		p.StarknetIdContracts.NamingContract != "" {
+		contract = p.StarknetIdContracts.NamingContract
+	} else if p.ChainId != "" {
+		contract, err = utils.GetNamingContract(p.ChainId)
+		if err != nil {
+			return []string{}, fmt.Errorf(
+				"failed to get naming contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		return []string{}, fmt.Errorf(
+			"Provider not initialized with chainId or StarknetIdContracts",
+		)
+	}
+
+	var multicallContract string
+	if multicall == nil {
+		if p.ChainId != "" {
+			multicallContract, err = utils.GetMulticallContract(p.ChainId)
+			if err != nil {
+				return []string{}, fmt.Errorf(
+					"failed to get multicall contract with chainId %s: %w",
+					p.ChainId,
+					err,
+				)
+			}
+		} else {
+			return []string{}, fmt.Errorf(
+				"no multicall contract provided and provider not initialized with chainId",
+			)
+		}
+	} else {
+		multicallContract = *multicall
+	}
+
+	contractAddress, err := NethermindEthUtils.HexToFelt(contract)
+	if err != nil {
+		return []string{}, fmt.Errorf(
+			"failed to convert contract address %s: %w",
+			contract,
+			err,
+		)
+	}
+
+	multicallAddress, err := NethermindEthUtils.HexToFelt(multicallContract)
+	if err != nil {
+		return []string{}, fmt.Errorf(
+			"failed to convert multicall address %s: %w",
+			multicallContract,
+			err,
+		)
+	}
+
+	var callData []*felt.Felt
+	callData = append(
+		callData,
+		// number of addresses
+		(&felt.Felt{}).SetUint64(uint64(len(addresses))),
+	)
+
+	for _, address := range addresses {
+		addressFelt, err := NethermindEthUtils.HexToFelt(address)
+		if err != nil {
+			return []string{}, fmt.Errorf(
+				"failed to convert address %s: %w",
+				address,
+				err,
+			)
+		}
+
+		callData = append(callData, []*felt.Felt{
+			(&felt.Felt{}).SetUint64(0), // static execution
+			(&felt.Felt{}).SetUint64(0), // hardcoded
+			contractAddress,
+			(&felt.Felt{}).SetUint64(0), // hardcoded
+			NethermindEthUtils.GetSelectorFromNameFelt(
+				"address_to_domain",
+			),
+			(&felt.Felt{}).SetUint64(2), // array size
+			(&felt.Felt{}).SetUint64(0), // hardcoded
+			addressFelt,
+			(&felt.Felt{}).SetUint64(0), // hardcoded
+			(&felt.Felt{}).SetUint64(0), // extra data
+		}...)
+	}
+
+	tx := rpc.FunctionCall{
+		ContractAddress: multicallAddress,
+		EntryPointSelector: NethermindEthUtils.GetSelectorFromNameFelt(
+			"aggregate",
+		),
+		Calldata: callData,
+	}
+
+	result, err := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if err != nil {
+		return []string{}, fmt.Errorf("failed to call contract: %w", err)
+	}
+
+	if len(result) > 0 && result[0].Uint64() != uint64(len(addresses)) {
+		return []string{}, fmt.Errorf(
+			"unexpected result",
+		)
+	}
+
+	var domains []string
+
+	for i := 1; i < len(result); {
+		length := result[i].Uint64()
+		if len(result) < i+int(length)+1 {
+			return nil, fmt.Errorf("unexpected result length")
+		}
+		domains = append(
+			domains,
+			utils.DecodeDomain(result[i+2:i+1+int(length)]),
+		)
+		i += int(length) + 1
+	}
+
+	return domains, nil
+}
 
 // GetStarknetId returns the Starknet ID for a given .stark domain.
 //
@@ -223,9 +357,9 @@ func (p *Provider) GetStarknetId(
 		Calldata: utils.FmtFeltArrayCallData(encodedDomain),
 	}
 
-	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
-	if rpcErr != nil {
-		return "", fmt.Errorf("failed to call contract: %w", rpcErr)
+	result, err := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if err != nil {
+		return "", fmt.Errorf("failed to call contract: %w", err)
 	}
 
 	if len(result) != 1 {
@@ -293,7 +427,7 @@ func (p *Provider) GetUserData(
 	callData := []*felt.Felt{
 		idFelt,
 		fieldFelt,
-		(&felt.Felt{}).SetUint64(0), // domain: 0
+		(&felt.Felt{}).SetUint64(0), // extra data
 	}
 
 	tx := rpc.FunctionCall{
@@ -304,9 +438,9 @@ func (p *Provider) GetUserData(
 		Calldata: callData,
 	}
 
-	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
-	if rpcErr != nil {
-		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	result, err := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", err)
 	}
 
 	if len(result) != 1 {
@@ -378,7 +512,7 @@ func (p *Provider) GetExtendedUserData(
 		idFelt,
 		fieldFelt,
 		(&felt.Felt{}).SetUint64(uint64(length)),
-		(&felt.Felt{}).SetUint64(0), // domain: 0
+		(&felt.Felt{}).SetUint64(0), // extra data
 	}
 
 	tx := rpc.FunctionCall{
@@ -389,9 +523,9 @@ func (p *Provider) GetExtendedUserData(
 		Calldata: callData,
 	}
 
-	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
-	if rpcErr != nil {
-		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	result, err := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", err)
 	}
 
 	return result[1:], nil
@@ -456,7 +590,7 @@ func (p *Provider) GetUnboundedUserData(
 	callData := []*felt.Felt{
 		idFelt,
 		fieldFelt,
-		(&felt.Felt{}).SetUint64(0), // domain: 0
+		(&felt.Felt{}).SetUint64(0), // extra data
 	}
 
 	tx := rpc.FunctionCall{
@@ -467,9 +601,9 @@ func (p *Provider) GetUnboundedUserData(
 		Calldata: callData,
 	}
 
-	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
-	if rpcErr != nil {
-		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	result, err := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", err)
 	}
 
 	return result[1:], nil
@@ -559,7 +693,7 @@ func (p *Provider) GetVerifierData(
 		idFelt,
 		fieldFelt,
 		verifierAddress,
-		(&felt.Felt{}).SetUint64(0), // domain: 0
+		(&felt.Felt{}).SetUint64(0), // extra data
 	}
 
 	tx := rpc.FunctionCall{
@@ -570,9 +704,9 @@ func (p *Provider) GetVerifierData(
 		Calldata: callData,
 	}
 
-	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
-	if rpcErr != nil {
-		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	result, err := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", err)
 	}
 
 	if len(result) != 1 {
@@ -669,7 +803,7 @@ func (p *Provider) GetExtendedVerifierData(
 		fieldFelt,
 		(&felt.Felt{}).SetUint64(uint64(length)),
 		verifierAddress,
-		(&felt.Felt{}).SetUint64(0), // domain: 0
+		(&felt.Felt{}).SetUint64(0), // extra data
 	}
 
 	tx := rpc.FunctionCall{
@@ -680,9 +814,9 @@ func (p *Provider) GetExtendedVerifierData(
 		Calldata: callData,
 	}
 
-	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
-	if rpcErr != nil {
-		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	result, err := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", err)
 	}
 
 	return result[1:], nil
@@ -772,7 +906,7 @@ func (p *Provider) GetUnboundedVerifierData(
 		idFelt,
 		fieldFelt,
 		verifierAddress,
-		(&felt.Felt{}).SetUint64(0), // domain: 0
+		(&felt.Felt{}).SetUint64(0), // extra data
 	}
 
 	tx := rpc.FunctionCall{
@@ -783,9 +917,9 @@ func (p *Provider) GetUnboundedVerifierData(
 		Calldata: callData,
 	}
 
-	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
-	if rpcErr != nil {
-		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	result, err := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", err)
 	}
 
 	return result[1:], nil
@@ -877,7 +1011,7 @@ func (p *Provider) GetPfpVerifierData(
 		idFelt,
 		fieldFelt,
 		verifierAddress,
-		(&felt.Felt{}).SetUint64(0), // domain: 0
+		(&felt.Felt{}).SetUint64(0), // extra data
 	}
 
 	tx := rpc.FunctionCall{
@@ -888,9 +1022,9 @@ func (p *Provider) GetPfpVerifierData(
 		Calldata: callData,
 	}
 
-	resultContractData, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
-	if rpcErr != nil {
-		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	resultContractData, err := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", err)
 	}
 
 	fieldFelt, err = utils.EncodeShortString("nft_pp_id")
@@ -907,7 +1041,7 @@ func (p *Provider) GetPfpVerifierData(
 		fieldFelt,
 		(&felt.Felt{}).SetUint64(2), // length: 2
 		verifierAddress,
-		(&felt.Felt{}).SetUint64(0), // domain: 0
+		(&felt.Felt{}).SetUint64(0), // extra data
 	}
 
 	tx = rpc.FunctionCall{
@@ -918,9 +1052,9 @@ func (p *Provider) GetPfpVerifierData(
 		Calldata: callData,
 	}
 
-	resultNftTokenData, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
-	if rpcErr != nil {
-		return nil, fmt.Errorf("failed to call contract: %w", rpcErr)
+	resultNftTokenData, err := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call contract: %w", err)
 	}
 
 	return append(
@@ -995,9 +1129,9 @@ func (p *Provider) tryResolveDomain(
 		),
 	}
 
-	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
-	if rpcErr != nil {
-		return "", fmt.Errorf("failed to call contract: %w", rpcErr)
+	result, err := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if err != nil {
+		return "", fmt.Errorf("failed to call contract: %w", err)
 	}
 
 	if len(result) != 1 {
@@ -1053,9 +1187,9 @@ func (p *Provider) tryResolveAddress(
 		),
 	}
 
-	result, rpcErr := p.Client.Call(ctx, tx, constants.BLOCK_ID)
-	if rpcErr != nil {
-		return "", fmt.Errorf("failed to call contract: %w", rpcErr)
+	result, err := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if err != nil {
+		return "", fmt.Errorf("failed to call contract: %w", err)
 	}
 
 	nbDomains := result[0].Uint64()
