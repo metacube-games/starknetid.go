@@ -465,6 +465,39 @@ func TestGetProfileData(t *testing.T) {
 			*profileData.ProfilePicture,
 		)
 	}
+
+	profileData, err = p.GetProfileData(
+		context.Background(),
+		"0x123",
+		true,
+		nil,
+		nil,
+		nil,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if profileData.Name != "" {
+		t.Errorf("Expected empty string but got %s", profileData.Name)
+	}
+	if profileData.Id != 0 {
+		t.Errorf("Expected 0 but got %d", profileData.Id)
+	}
+	if profileData.ProfilePicture != nil {
+		t.Error("Expected nil but got profile picture")
+	}
+	if profileData.Discord != nil {
+		t.Error("Expected nil but got discord")
+	}
+	if profileData.Twitter != nil {
+		t.Error("Expected nil but got twitter")
+	}
+	if profileData.Github != nil {
+		t.Error("Expected nil but got github")
+	}
+	if profileData.ProofOfPersonhood {
+		t.Error("Expected false but got true")
+	}
 }
 
 func TestGetStarkProfiles(t *testing.T) {
@@ -475,15 +508,15 @@ func TestGetStarkProfiles(t *testing.T) {
 
 	starkProfiles, err := p.GetStarkProfiles(
 		context.Background(),
-		[]string{BASTVRE_ADDRESS, METACUBE_ADDRESS, FRICOBEN_ADDRESS},
+		[]string{BASTVRE_ADDRESS, "0x123", METACUBE_ADDRESS, FRICOBEN_ADDRESS},
 		true,
 		nil,
 	)
 	if err != nil {
 		t.Error(err)
 	}
-	if len(starkProfiles) != 3 {
-		t.Errorf("Expected 3 but got %d", len(starkProfiles))
+	if len(starkProfiles) != 4 {
+		t.Errorf("Expected 4 but got %d", len(starkProfiles))
 	}
 	if starkProfiles[0].Name != BASTVRE_DOMAIN {
 		t.Errorf("Expected %s but got %s", BASTVRE_DOMAIN, starkProfiles[0].Name)
@@ -494,28 +527,37 @@ func TestGetStarkProfiles(t *testing.T) {
 	if starkProfiles[0].ProfilePicture != nil {
 		t.Errorf("Expected nil but got %s", *starkProfiles[0].ProfilePicture)
 	}
-	if starkProfiles[1].Name != METACUBE_DOMAIN {
-		t.Errorf("Expected %s but got %s", METACUBE_DOMAIN, starkProfiles[1].Name)
+	if starkProfiles[1].Name != "" {
+		t.Errorf("Expected empty string but got %s", starkProfiles[1].Name)
 	}
-	if starkProfiles[1].Id != 899148099505 {
-		t.Errorf("Expected 899148099505 but got %d", starkProfiles[1].Id)
+	if starkProfiles[1].Id != 0 {
+		t.Errorf("Expected 0 but got %d", starkProfiles[1].Id)
 	}
 	if starkProfiles[1].ProfilePicture != nil {
 		t.Errorf("Expected nil but got %s", *starkProfiles[1].ProfilePicture)
 	}
-	if starkProfiles[2].Name != FRICOBEN_DOMAIN {
+	if starkProfiles[2].Name != METACUBE_DOMAIN {
+		t.Errorf("Expected %s but got %s", METACUBE_DOMAIN, starkProfiles[1].Name)
+	}
+	if starkProfiles[2].Id != 899148099505 {
+		t.Errorf("Expected 899148099505 but got %d", starkProfiles[1].Id)
+	}
+	if starkProfiles[2].ProfilePicture != nil {
+		t.Errorf("Expected nil but got %s", *starkProfiles[1].ProfilePicture)
+	}
+	if starkProfiles[3].Name != FRICOBEN_DOMAIN {
 		t.Errorf("Expected %s but got %s", FRICOBEN_DOMAIN, starkProfiles[2].Name)
 	}
-	if starkProfiles[2].Id != 8 {
+	if starkProfiles[3].Id != 8 {
 		t.Errorf("Expected 8 but got %d", starkProfiles[2].Id)
 	}
-	if starkProfiles[2].ProfilePicture == nil {
+	if starkProfiles[3].ProfilePicture == nil {
 		t.Error("Expected profile picture but got nil")
 	}
-	if *starkProfiles[2].ProfilePicture != "https://img.starkurabu.com/41584010289889200780326579696828426.png" {
+	if *starkProfiles[3].ProfilePicture != "https://img.starkurabu.com/41584010289889200780326579696828426.png" {
 		t.Errorf(
 			"Expected https://img.starkurabu.com/41584010289889200780326579696828426.png but got %s",
-			*starkProfiles[2].ProfilePicture,
+			*starkProfiles[3].ProfilePicture,
 		)
 	}
 }

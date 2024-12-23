@@ -1496,10 +1496,12 @@ func (p *Provider) GetProfileData(
 	if len(result) < i+int(length)+1 {
 		return types.StarkProfile{}, fmt.Errorf("unexpected result")
 	}
-	if length < 2 {
+	if length == 0 {
 		return types.StarkProfile{}, fmt.Errorf("unexpected result")
 	}
-	profile.Name = utils.DecodeDomain(result[i+2 : i+1+int(length)])
+	if length >= 2 {
+		profile.Name = utils.DecodeDomain(result[i+2 : i+1+int(length)])
+	}
 	i += int(length) + 1
 
 	// id
@@ -1611,57 +1613,20 @@ func (p *Provider) GetProfileData(
 		url := fmt.Sprintf("https://identicon.starknet.id/%d", profile.Id)
 		profile.ProfilePicture = &url
 	} else if strings.Contains(metadata, "base64") {
-		parts := strings.Split(metadata, ",")
-		if len(parts) < 2 {
-			return types.StarkProfile{}, fmt.Errorf("invalid metadata format")
-		}
-		base64Data := strings.TrimSuffix(parts[1], ",")
-		decodedData, err := base64.StdEncoding.DecodeString(base64Data)
+		image, err := getImageFromBase64Metadata(metadata)
 		if err != nil {
 			return types.StarkProfile{}, fmt.Errorf(
-				"error decoding base64: %w",
+				"failed to get image from base64 metadata: %w",
 				err,
-			)
-		}
-		var result map[string]interface{}
-		if err := json.Unmarshal(decodedData, &result); err != nil {
-			return types.StarkProfile{}, fmt.Errorf(
-				"error parsing JSON: %w",
-				err,
-			)
-		}
-		image, ok := result["image"].(string)
-		if !ok {
-			return types.StarkProfile{}, fmt.Errorf(
-				"image field not found or not a string",
 			)
 		}
 		profile.ProfilePicture = &image
 	} else {
-		metadata = strings.Replace(
-			metadata,
-			"ipfs://", "https://gateway.pinata.cloud/ipfs/",
-			1,
-		)
-		resp, err := http.Get(metadata)
+		image, err := fetchImage(metadata)
 		if err != nil {
 			return types.StarkProfile{}, fmt.Errorf(
-				"failed to fetch metadata: %w",
+				"failed to get image from url metadata: %w",
 				err,
-			)
-		}
-		defer resp.Body.Close()
-		var content interface{}
-		if err := json.NewDecoder(resp.Body).Decode(&content); err != nil {
-			return types.StarkProfile{}, fmt.Errorf(
-				"failed to decode metadata: %w",
-				err,
-			)
-		}
-		image, ok := content.(map[string]interface{})["image"].(string)
-		if !ok {
-			return types.StarkProfile{}, fmt.Errorf(
-				"image field not found or not a string",
 			)
 		}
 		profile.ProfilePicture = &image
@@ -1850,13 +1815,6 @@ func (p *Provider) GetStarkProfiles(
 		)
 	}
 
-	_ = identityContractAddress
-	_ = pfpVerifierContractAddress
-	_ = utilsMulticallContractAddress
-	_ = blobbertContractAddress
-	_ = nftPpContractFelt
-	_ = nftPpIdFelt
-
 	const NB_INSTRUCTIONS = 5
 
 	callData := []*felt.Felt{
@@ -2020,10 +1978,12 @@ func (p *Provider) GetStarkProfiles(
 		if len(result) < i+int(length)+1 {
 			return nil, fmt.Errorf("unexpected result")
 		}
-		if length < 2 {
+		if length == 0 {
 			return nil, fmt.Errorf("unexpected result")
 		}
-		profiles[j].Name = utils.DecodeDomain(result[i+2 : i+1+int(length)])
+		if length >= 2 {
+			profiles[j].Name = utils.DecodeDomain(result[i+2 : i+1+int(length)])
+		}
 		i += int(length) + 1
 
 		// id
@@ -2092,57 +2052,20 @@ func (p *Provider) GetStarkProfiles(
 			url := fmt.Sprintf("https://identicon.starknet.id/%d", profiles[j].Id)
 			profiles[j].ProfilePicture = &url
 		} else if strings.Contains(metadata, "base64") {
-			parts := strings.Split(metadata, ",")
-			if len(parts) < 2 {
-				return nil, fmt.Errorf("invalid metadata format")
-			}
-			base64Data := strings.TrimSuffix(parts[1], ",")
-			decodedData, err := base64.StdEncoding.DecodeString(base64Data)
+			image, err := getImageFromBase64Metadata(metadata)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"error decoding base64: %w",
+					"failed to get image from base64 metadata: %w",
 					err,
-				)
-			}
-			var result map[string]interface{}
-			if err := json.Unmarshal(decodedData, &result); err != nil {
-				return nil, fmt.Errorf(
-					"error parsing JSON: %w",
-					err,
-				)
-			}
-			image, ok := result["image"].(string)
-			if !ok {
-				return nil, fmt.Errorf(
-					"image field not found or not a string",
 				)
 			}
 			profiles[j].ProfilePicture = &image
 		} else {
-			metadata = strings.Replace(
-				metadata,
-				"ipfs://", "https://gateway.pinata.cloud/ipfs/",
-				1,
-			)
-			resp, err := http.Get(metadata)
+			image, err := fetchImage(metadata)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"failed to fetch metadata: %w",
+					"failed to get image from url metadata: %w",
 					err,
-				)
-			}
-			defer resp.Body.Close()
-			var content interface{}
-			if err := json.NewDecoder(resp.Body).Decode(&content); err != nil {
-				return nil, fmt.Errorf(
-					"failed to decode metadata: %w",
-					err,
-				)
-			}
-			image, ok := content.(map[string]interface{})["image"].(string)
-			if !ok {
-				return nil, fmt.Errorf(
-					"image field not found or not a string",
 				)
 			}
 			profiles[j].ProfilePicture = &image
@@ -2303,4 +2226,64 @@ func (p *Provider) checkArguments(
 	} else {
 		return nil, fmt.Errorf("invalid idDomainOrAddr")
 	}
+}
+
+// getImageFromBase64Metadata gets the image from a base64 metadata.
+//
+// Parameters:
+//   - metadata: the base64 metadata.
+//
+// Returns:
+//   - string: the image.
+//   - error: an error if the image could not be fetched.
+func getImageFromBase64Metadata(metadata string) (string, error) {
+	parts := strings.Split(metadata, ",")
+	if len(parts) < 2 {
+		return "", fmt.Errorf("invalid metadata format")
+	}
+	base64Data := strings.TrimSuffix(parts[1], ",")
+	decodedData, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		return "", fmt.Errorf("error decoding base64: %w", err)
+	}
+	var result map[string]interface{}
+	if err := json.Unmarshal(decodedData, &result); err != nil {
+		return "", fmt.Errorf("error parsing JSON: %w", err)
+	}
+	image, ok := result["image"].(string)
+	if !ok {
+		return "", fmt.Errorf("image field not found or not a string")
+	}
+	return image, nil
+}
+
+// fetchImage fetches an image from a URL.
+//
+// Parameters:
+//   - url: the URL.
+//
+// Returns:
+//   - string: the image.
+//   - error: an error if the image could not be fetched.
+func fetchImage(url string) (string, error) {
+	url = strings.Replace(
+		url,
+		"ipfs://",
+		"https://gateway.pinata.cloud/ipfs/",
+		1,
+	)
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch image: %w", err)
+	}
+	defer resp.Body.Close()
+	var content interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&content); err != nil {
+		return "", fmt.Errorf("failed to decode image: %w", err)
+	}
+	image, ok := content.(map[string]interface{})["image"].(string)
+	if !ok {
+		return "", fmt.Errorf("image field not found or not a string")
+	}
+	return image, nil
 }

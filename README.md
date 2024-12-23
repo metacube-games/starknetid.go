@@ -68,8 +68,6 @@ The library is documented using GoDoc, you can find the documentation [here](htt
 
 ## Features
 
-The library is still in development and not all features are implemented yet
-
 | Method | Implemented |
 | --- | --- |
 | `GetAddressFromStarkName` | ✅ |
