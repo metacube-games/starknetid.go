@@ -10,11 +10,12 @@ import (
 )
 
 const (
-	RPC_URL            = "https://starknet-mainnet.public.blastapi.io/rpc/v0_7"
-	METACUBE_ADDRESS   = "0x2ba4ea61d80d1a60adf03150b7634af5fee6f4b3167d915ab8cce2be3ac2023"
-	METACUBE_DOMAIN    = "metacube.stark"
-	METACUBE_ID        = "899148099505"
+	RPC_URL          = "https://starknet-mainnet.public.blastapi.io/rpc/v0_7"
+	METACUBE_ADDRESS = "0x2ba4ea61d80d1a60adf03150b7634af5fee6f4b3167d915ab8cce2be3ac2023"
+	METACUBE_DOMAIN  = "metacube.stark"
+	METACUBE_ID      = "899148099505"
 
+	FRICOBEN_ADDRESS         = "0x061b6c0a78f9edf13cea17b50719f3344533fadd470b8cb29c2b4318014f52d3"
 	FRICOBEN_DOMAIN          = "fricoben.stark"
 	FRICOBEN_NFT_PP_CONTRACT = "0x3ab1124ef9ec3a2f2b1d9838f9066f9a894483d40b33390dda8d85c01a315a3"
 )
@@ -177,4 +178,30 @@ func main() {
 		"Profile picture verifier data: %v\n",
 		ppVerifierData,
 	)
+
+	// Get Stark profile from the address
+	starkProfile, err := provider.GetProfileData(
+		context.Background(),
+		FRICOBEN_ADDRESS,
+		true,
+		nil,
+		nil,
+		nil,
+	)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Stark profile: %v\n", starkProfile)
+
+	// Get Stark profile of multiple addresses
+	starkProfiles, err := provider.GetStarkProfiles(
+		context.Background(),
+		[]string{METACUBE_ADDRESS, FRICOBEN_ADDRESS},
+		true,
+		nil,
+	)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Stark profiles: %v\n", starkProfiles)
 }
