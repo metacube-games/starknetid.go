@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/NethermindEth/juno/core/felt"
@@ -644,6 +646,32 @@ func AddHexPrefix(str string) string {
 	return "0x" + str
 }
 
+// RemoveHexPrefix removes the "0x" prefix from a string if it has it.
+//
+// Parameters:
+//   - str: The string to remove the prefix from.
+//
+// Returns:
+//   - string: The string without the "0x" prefix.
+func RemoveHexPrefix(str string) string {
+	if strings.HasPrefix(str, "0x") {
+		return str[2:]
+	}
+	return str
+}
+
+// IsHex checks if a string is a hexadecimal string.
+//
+// Parameters:
+//   - str: The string to check.
+//
+// Returns:
+//   - bool: True if the string is a hexadecimal string, false otherwise.
+func IsHex(str string) bool {
+	_, err := hex.DecodeString(RemoveHexPrefix(str))
+	return err == nil
+}
+
 // EncodeShortString encodes a string to its hexadecimal representation with a
 // "0x" prefix.
 //
@@ -667,4 +695,50 @@ func EncodeShortString(str string) (*felt.Felt, error) {
 	}
 
 	return NethermindEthUtils.HexToFelt(AddHexPrefix(hexStr))
+}
+
+// IsDecimalString checks if a string is a decimal string.
+//
+// Parameters:
+//   - str: The string to check.
+//
+// Returns:
+//   - bool: True if the string is a decimal string, false otherwise.
+func IsDecimalString(str string) bool {
+	_, err := strconv.Atoi(str)
+	return err == nil
+}
+
+// DecodeShortString decodes a string from its hexadecimal representation.
+//
+// Parameters:
+//   - str: The string to decode.
+//
+// Returns:
+//   - string: The decoded string.
+//   - error: An error if the string is not a hexadecimal or decimal string.
+func DecodeShortString(str string) (string, error) {
+	if !IsASCII(str) {
+		return "", fmt.Errorf("%s is not an ASCII string", str)
+	}
+	if IsHex(str) {
+		res, err := hex.DecodeString(RemoveHexPrefix(str))
+		if err != nil {
+			return "", err
+		}
+		return string(res), nil
+	}
+	if IsDecimalString(str) {
+		decimalValue, err := strconv.ParseInt(str, 10, 64)
+		if err != nil {
+			return "", err
+		}
+		hexValue := strconv.FormatInt(decimalValue, 16)
+		res, err := hex.DecodeString(RemoveHexPrefix(hexValue))
+		if err != nil {
+			return "", err
+		}
+		return string(res), nil
+	}
+	return "", fmt.Errorf("%s is not Hex or decimal", str)
 }

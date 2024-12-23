@@ -20,6 +20,9 @@ const (
 	FRICOBEN_DOMAIN          = "fricoben.stark"
 	FRICOBEN_NFT_PP_CONTRACT = "0x3ab1124ef9ec3a2f2b1d9838f9066f9a894483d40b33390dda8d85c01a315a3"
 
+	BASTVRE_ADDRESS = "0x040093c5f330042f7006816562435154737c392d4a022c8433cf3c67ed53106f"
+	BASTVRE_DOMAIN  = "bastvre.stark"
+
 	TEST_BRAAVOS_ADDRESS = "0x0191ae0a520af918d4e218e254946f67486f090f4c52411476544c7a4471f6d2"
 	TEST_BRAAVOS_DOMAIN  = "test.braavos.stark"
 )
@@ -384,6 +387,82 @@ func TestGetPfpVerifierData(t *testing.T) {
 		t.Errorf(
 			"Expected empty string but got %s",
 			pfpVerifierData[3].String(),
+		)
+	}
+}
+
+func TestGetProfileData(t *testing.T) {
+	p, err := createProvider()
+	if err != nil {
+		t.Error(err)
+	}
+
+	profileData, err := p.GetProfileData(
+		context.Background(),
+		BASTVRE_ADDRESS,
+		true,
+		nil,
+		nil,
+		nil,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if profileData.Name != BASTVRE_DOMAIN {
+		t.Errorf("Expected %s but got %s", BASTVRE_DOMAIN, profileData.Name)
+	}
+	if profileData.Id != 656497159640 {
+		t.Errorf("Expected 656497159640 but got %d", profileData.Id)
+	}
+	if profileData.ProfilePicture != nil {
+		t.Errorf("Expected nil but got %s", *profileData.ProfilePicture)
+	}
+	if profileData.Discord == nil {
+		t.Error("Expected discord but got nil")
+	}
+	if *profileData.Discord != "0x72e2e5a9cc40001" {
+		t.Errorf("Expected 0x72e2e5a9cc40001 but got %s", *profileData.Discord)
+	}
+	if profileData.Twitter == nil {
+		t.Error("Expected twitter but got nil")
+	}
+	if *profileData.Twitter != "0x17b449fd7956d000" {
+		t.Errorf("Expected 0x17b449fd7956d000 but got %s", *profileData.Twitter)
+	}
+	if profileData.Github == nil {
+		t.Error("Expected github but got nil")
+	}
+	if *profileData.Github != "0x365fdda" {
+		t.Errorf("Expected 0x365fdda but got %s", *profileData.Github)
+	}
+	if profileData.ProofOfPersonhood {
+		t.Error("Expected false but got true")
+	}
+
+	profileData, err = p.GetProfileData(
+		context.Background(),
+		FRICOBEN_ADDRESS,
+		true,
+		nil,
+		nil,
+		nil,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if profileData.Name != FRICOBEN_DOMAIN {
+		t.Errorf("Expected %s but got %s", FRICOBEN_DOMAIN, profileData.Name)
+	}
+	if profileData.Id != 8 {
+		t.Errorf("Expected 8 but got %d", profileData.Id)
+	}
+	if profileData.ProfilePicture == nil {
+		t.Error("Expected profile picture but got nil")
+	}
+	if *profileData.ProfilePicture != "https://img.starkurabu.com/41584010289889200780326579696828426.png" {
+		t.Errorf(
+			"Expected https://img.starkurabu.com/41584010289889200780326579696828426.png but got %s",
+			*profileData.ProfilePicture,
 		)
 	}
 }

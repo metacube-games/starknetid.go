@@ -2,9 +2,13 @@ package provider
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/NethermindEth/juno/core/felt"
 	"github.com/NethermindEth/starknet.go/rpc"
@@ -280,9 +284,7 @@ func (p *Provider) GetStarkNames(
 	}
 
 	if len(result) > 0 && result[0].Uint64() != uint64(len(addresses)) {
-		return []string{}, fmt.Errorf(
-			"unexpected result",
-		)
+		return []string{}, fmt.Errorf("unexpected result")
 	}
 
 	var domains []string
@@ -1067,19 +1069,592 @@ func (p *Provider) GetPfpVerifierData(
 
 }
 
-// // GetExtendedPfpVerifierData returns the extended profile data for a given
-// // address.
-// func (p *Provider) GetProfileData(
-// 	ctx context.Context,
-// 	address string,
-// 	useDefaultPfp bool,
-// 	verifier *string,
-// 	pfpVerifier *string,
-// 	popVerifier *string,
-// ) (types.StarkProfile, error) {
-// 	// TODO implement
-// 	return types.StarkProfile{}, fmt.Errorf("not implemented")
-// }
+// GetExtendedPfpVerifierData returns the extended profile data for a given
+// address.
+func (p *Provider) GetProfileData(
+	ctx context.Context,
+	address string,
+	useDefaultPfp bool,
+	verifier *string,
+	pfpVerifier *string,
+	popVerifier *string,
+) (types.StarkProfile, error) {
+	var identityContract string
+	var err error
+	if p.StarknetIdContracts != nil &&
+		p.StarknetIdContracts.IdentityContract != "" {
+		identityContract = p.StarknetIdContracts.IdentityContract
+	} else if p.ChainId != "" {
+		identityContract, err = utils.GetIdentityContract(p.ChainId)
+		if err != nil {
+			return types.StarkProfile{}, fmt.Errorf(
+				"failed to get identity contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		return types.StarkProfile{}, fmt.Errorf(
+			"Provider not initialized with chainId or StarknetIdContracts",
+		)
+	}
+
+	identityContractAddress, err := NethermindEthUtils.HexToFelt(
+		identityContract,
+	)
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to convert identity contract address %s: %w",
+			identityContract,
+			err,
+		)
+	}
+
+	var namingContract string
+	if p.StarknetIdContracts != nil &&
+		p.StarknetIdContracts.NamingContract != "" {
+		namingContract = p.StarknetIdContracts.NamingContract
+	} else if p.ChainId != "" {
+		namingContract, err = utils.GetNamingContract(p.ChainId)
+		if err != nil {
+			return types.StarkProfile{}, fmt.Errorf(
+				"failed to get naming contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		return types.StarkProfile{}, fmt.Errorf(
+			"Provider not initialized with chainId or StarknetIdContracts",
+		)
+	}
+
+	namingContractAddress, err := NethermindEthUtils.HexToFelt(namingContract)
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to convert naming contract address %s: %w",
+			namingContract,
+			err,
+		)
+	}
+
+	var verifierContract string
+	if verifier == nil {
+		verifierContract, err = utils.GetVerifierContract(p.ChainId)
+		if err != nil {
+			return types.StarkProfile{}, fmt.Errorf(
+				"failed to get verifier contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		verifierContract = *verifier
+	}
+
+	verifierContractAddress, err := NethermindEthUtils.HexToFelt(
+		verifierContract,
+	)
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to convert verifier contract address %s: %w",
+			verifierContract,
+			err,
+		)
+	}
+
+	var pfpVerifierContract string
+	if pfpVerifier == nil {
+		pfpVerifierContract, err = utils.GetPfpVerifierContract(p.ChainId)
+		if err != nil {
+			return types.StarkProfile{}, fmt.Errorf(
+				"failed to get pfp verifier contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		pfpVerifierContract = *pfpVerifier
+	}
+
+	pfpVerifierContractAddress, err := NethermindEthUtils.HexToFelt(
+		pfpVerifierContract,
+	)
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to convert pfp verifier contract address %s: %w",
+			pfpVerifierContract,
+			err,
+		)
+	}
+
+	var popVerifierContract string
+	if popVerifier == nil {
+		popVerifierContract, err = utils.GetPopVerifierContract(p.ChainId)
+		if err != nil {
+			return types.StarkProfile{}, fmt.Errorf(
+				"failed to get pop verifier contract with chainId %s: %w",
+				p.ChainId,
+				err,
+			)
+		}
+	} else {
+		popVerifierContract = *popVerifier
+	}
+
+	popVerifierContractAddress, err := NethermindEthUtils.HexToFelt(
+		popVerifierContract,
+	)
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to convert pop verifier contract address %s: %w",
+			popVerifierContract,
+			err,
+		)
+	}
+
+	multicallContract, err := utils.GetMulticallContract(p.ChainId)
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to get multicall contract with chainId %s: %w",
+			p.ChainId,
+			err,
+		)
+	}
+
+	multicallContractAddress, err := NethermindEthUtils.HexToFelt(
+		multicallContract,
+	)
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to convert multicall contract address %s: %w",
+			multicallContract,
+			err,
+		)
+	}
+
+	addressFelt, err := NethermindEthUtils.HexToFelt(address)
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to convert address %s: %w",
+			address,
+			err,
+		)
+	}
+
+	twitterFelt, err := utils.EncodeShortString("twitter")
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to encode twitter: %w",
+			err,
+		)
+	}
+
+	githubFelt, err := utils.EncodeShortString("github")
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to encode github: %w",
+			err,
+		)
+	}
+
+	discordFelt, err := utils.EncodeShortString("discord")
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to encode discord: %w",
+			err,
+		)
+	}
+
+	popFelt, err := utils.EncodeShortString("proof_of_personhood")
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to encode pop: %w",
+			err,
+		)
+	}
+
+	nftPpContractFelt, err := utils.EncodeShortString("nft_pp_contract")
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to encode nft_pp_contract: %w",
+			err,
+		)
+	}
+
+	nftPpIdFelt, err := utils.EncodeShortString("nft_pp_id")
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to encode nft_pp_id: %w",
+			err,
+		)
+	}
+
+	callData := []*felt.Felt{
+		// number of parameter objects
+		(&felt.Felt{}).SetUint64(9),
+		// address to domain
+		(&felt.Felt{}).SetUint64(0), // static execution
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		namingContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		NethermindEthUtils.GetSelectorFromNameFelt(
+			"address_to_domain",
+		),
+		(&felt.Felt{}).SetUint64(2), // array size
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		addressFelt,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		(&felt.Felt{}).SetUint64(0), // extra data
+		// domain to id
+		(&felt.Felt{}).SetUint64(0), // static execution
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		namingContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		NethermindEthUtils.GetSelectorFromNameFelt(
+			"domain_to_id",
+		),
+		(&felt.Felt{}).SetUint64(1), // array size
+		(&felt.Felt{}).SetUint64(2), // array reference
+		(&felt.Felt{}).SetUint64(0), // 0
+		(&felt.Felt{}).SetUint64(0), // 0
+		// twitter
+		(&felt.Felt{}).SetUint64(0), // static execution
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		identityContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_verifier_data",
+		),
+		(&felt.Felt{}).SetUint64(4), // array size
+		(&felt.Felt{}).SetUint64(1), // reference
+		(&felt.Felt{}).SetUint64(1), // 1
+		(&felt.Felt{}).SetUint64(0), // 0
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		twitterFelt,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		verifierContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		(&felt.Felt{}).SetUint64(0), // extra data
+		// github
+		(&felt.Felt{}).SetUint64(0), // static execution
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		identityContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_verifier_data",
+		),
+		(&felt.Felt{}).SetUint64(4), // array size
+		(&felt.Felt{}).SetUint64(1), // reference
+		(&felt.Felt{}).SetUint64(1), // 1
+		(&felt.Felt{}).SetUint64(0), // 0
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		githubFelt,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		verifierContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		(&felt.Felt{}).SetUint64(0), // extra data
+		// discord
+		(&felt.Felt{}).SetUint64(0), // static execution
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		identityContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_verifier_data",
+		),
+		(&felt.Felt{}).SetUint64(4), // array size
+		(&felt.Felt{}).SetUint64(1), // reference
+		(&felt.Felt{}).SetUint64(1), // 1
+		(&felt.Felt{}).SetUint64(0), // 0
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		discordFelt,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		verifierContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		(&felt.Felt{}).SetUint64(0), // extra data
+		// proof of personhood
+		(&felt.Felt{}).SetUint64(0), // static execution
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		identityContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_verifier_data",
+		),
+		(&felt.Felt{}).SetUint64(4), // array size
+		(&felt.Felt{}).SetUint64(1), // reference
+		(&felt.Felt{}).SetUint64(1), // 1
+		(&felt.Felt{}).SetUint64(0), // 0
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		popFelt,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		popVerifierContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		(&felt.Felt{}).SetUint64(0), // extra data
+		// nft_pp_contract
+		(&felt.Felt{}).SetUint64(0), // static execution
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		identityContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_verifier_data",
+		),
+		(&felt.Felt{}).SetUint64(4), // array size
+		(&felt.Felt{}).SetUint64(1), // reference
+		(&felt.Felt{}).SetUint64(1), // 1
+		(&felt.Felt{}).SetUint64(0), // 0
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		nftPpContractFelt,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		pfpVerifierContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		(&felt.Felt{}).SetUint64(0), // extra data
+		// nft_pp_id
+		(&felt.Felt{}).SetUint64(0), // static execution
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		identityContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		NethermindEthUtils.GetSelectorFromNameFelt(
+			"get_extended_verifier_data",
+		),
+		(&felt.Felt{}).SetUint64(5), // array size
+		(&felt.Felt{}).SetUint64(1), // reference
+		(&felt.Felt{}).SetUint64(1), // 1
+		(&felt.Felt{}).SetUint64(0), // 0
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		nftPpIdFelt,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		(&felt.Felt{}).SetUint64(2), // length: 2
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		pfpVerifierContractAddress,
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		(&felt.Felt{}).SetUint64(0), // extra data
+		// token URI
+		(&felt.Felt{}).SetUint64(2), // if not equal
+		(&felt.Felt{}).SetUint64(6), // 6
+		(&felt.Felt{}).SetUint64(0), // 0
+		(&felt.Felt{}).SetUint64(0), // 0
+		(&felt.Felt{}).SetUint64(1), // reference
+		(&felt.Felt{}).SetUint64(6), // 6
+		(&felt.Felt{}).SetUint64(0), // 0
+		(&felt.Felt{}).SetUint64(0), // hardcoded
+		NethermindEthUtils.GetSelectorFromNameFelt(
+			"tokenURI",
+		),
+		(&felt.Felt{}).SetUint64(2), // array size
+		(&felt.Felt{}).SetUint64(1), // reference
+		(&felt.Felt{}).SetUint64(7), // 7
+		(&felt.Felt{}).SetUint64(1), // 1
+		(&felt.Felt{}).SetUint64(1), // reference
+		(&felt.Felt{}).SetUint64(7), // 7
+		(&felt.Felt{}).SetUint64(2), // 2
+	}
+
+	tx := rpc.FunctionCall{
+		ContractAddress: multicallContractAddress,
+		EntryPointSelector: NethermindEthUtils.GetSelectorFromNameFelt(
+			"aggregate",
+		),
+		Calldata: callData,
+	}
+
+	result, err := p.Client.Call(ctx, tx, constants.BLOCK_ID)
+	if err != nil {
+		return types.StarkProfile{}, fmt.Errorf(
+			"failed to call contract: %w",
+			err,
+		)
+	}
+
+	if len(result) == 0 ||
+		(result[0].Uint64() != 8 && result[0].Uint64() != 9) {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+
+	var profile types.StarkProfile
+
+	i := 1
+
+	// name
+	if i >= len(result) {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	length := result[i].Uint64()
+	if len(result) < i+int(length)+1 {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	if length < 2 {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	profile.Name = utils.DecodeDomain(result[i+2 : i+1+int(length)])
+	i += int(length) + 1
+
+	// id
+	if i >= len(result) {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	length = result[i].Uint64()
+	if len(result) < i+int(length)+1 {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	profile.Id = result[i+1].Uint64()
+	i += int(length) + 1
+
+	// twitter
+	if i >= len(result) {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	length = result[i].Uint64()
+	if len(result) < i+int(length)+1 {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	if length != 0 && result[i+1] != (&felt.Felt{}).SetUint64(0) {
+		twitter := result[i+1].String()
+		profile.Twitter = &twitter
+	}
+	i += int(length) + 1
+
+	// github
+	if i >= len(result) {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	length = result[i].Uint64()
+	if len(result) < i+int(length)+1 {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	if length != 0 && result[i+1] != (&felt.Felt{}).SetUint64(0) {
+		github := result[i+1].String()
+		profile.Github = &github
+	}
+	i += int(length) + 1
+
+	// discord
+	if i >= len(result) {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	length = result[i].Uint64()
+	if len(result) < i+int(length)+1 {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	if length != 0 && result[i+1] != (&felt.Felt{}).SetUint64(0) {
+		discord := result[i+1].String()
+		profile.Discord = &discord
+	}
+	i += int(length) + 1
+
+	// proof of personhood
+	if i >= len(result) {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	length = result[i].Uint64()
+	if len(result) < i+int(length)+1 {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	if length != 0 {
+		profile.ProofOfPersonhood = result[i+1] == (&felt.Felt{}).SetUint64(1)
+	}
+	i += int(length) + 1
+
+	// no profile picture
+	if result[0].Uint64() == 8 {
+		return profile, nil
+	}
+
+	// skip next two fields
+	if i >= len(result) {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	length = result[i].Uint64()
+	i += int(length) + 1
+	if i >= len(result) {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	length = result[i].Uint64()
+	i += int(length) + 1
+
+	// profile picture
+	if i >= len(result) {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	length = result[i].Uint64()
+	if len(result) < i+int(length)+1 {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	if length < 2 {
+		return types.StarkProfile{}, fmt.Errorf("unexpected result")
+	}
+	metadata := ""
+	for j := i + 2; j < i+1+int(length); j += 1 {
+		res, err := utils.DecodeShortString(result[j].String())
+		if err != nil {
+			return types.StarkProfile{}, fmt.Errorf(
+				"failed to decode profile picture: %w",
+				err,
+			)
+		}
+		metadata += res
+	}
+	if metadata == "" && useDefaultPfp {
+		url := fmt.Sprintf("https://identicon.starknet.id/%d", profile.Id)
+		profile.ProfilePicture = &url
+	} else if strings.Contains(metadata, "base64") {
+		parts := strings.Split(metadata, ",")
+		if len(parts) < 2 {
+			return types.StarkProfile{}, fmt.Errorf("invalid metadata format")
+		}
+		base64Data := strings.TrimSuffix(parts[1], ",")
+		decodedData, err := base64.StdEncoding.DecodeString(base64Data)
+		if err != nil {
+			return types.StarkProfile{}, fmt.Errorf(
+				"error decoding base64: %w",
+				err,
+			)
+		}
+		var result map[string]interface{}
+		if err := json.Unmarshal(decodedData, &result); err != nil {
+			return types.StarkProfile{}, fmt.Errorf(
+				"error parsing JSON: %w",
+				err,
+			)
+		}
+		image, ok := result["image"].(string)
+		if !ok {
+			return types.StarkProfile{}, fmt.Errorf(
+				"image field not found or not a string",
+			)
+		}
+		profile.ProfilePicture = &image
+	} else {
+		metadata = strings.Replace(
+			metadata,
+			"ipfs://", "https://gateway.pinata.cloud/ipfs/",
+			1,
+		)
+		resp, err := http.Get(metadata)
+		if err != nil {
+			return types.StarkProfile{}, fmt.Errorf(
+				"failed to fetch metadata: %w",
+				err,
+			)
+		}
+		defer resp.Body.Close()
+		var content interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&content); err != nil {
+			return types.StarkProfile{}, fmt.Errorf(
+				"failed to decode metadata: %w",
+				err,
+			)
+		}
+		image, ok := content.(map[string]interface{})["image"].(string)
+		if !ok {
+			return types.StarkProfile{}, fmt.Errorf(
+				"image field not found or not a string",
+			)
+		}
+		profile.ProfilePicture = &image
+	}
+
+	return profile, nil
+}
 
 // // GetStarkProfiles returns the profile data for a given list of addresses.
 // func (p *Provider) GetStarkProfiles(

@@ -245,8 +245,8 @@ func TestIsSubdomain(t *testing.T) {
 		t.Errorf("Expected true but got false for 1232575.ben.stark")
 	}
 
-	if !utils.IsSubdomain("qsdqsdqsd.fricoben.stark") {
-		t.Errorf("Expected true but got false for qsdqsdqsd.fricoben.stark")
+	if !utils.IsSubdomain("qsdqsdqsd.BASTVRE.stark") {
+		t.Errorf("Expected true but got false for qsdqsdqsd.BASTVRE.stark")
 	}
 }
 
@@ -412,6 +412,56 @@ func TestAddHexPrefix(t *testing.T) {
 	}
 }
 
+func TestRemoveHexPrefix(t *testing.T) {
+	hexStrings := []string{
+		"0x123456",
+		"0xabcdef",
+		"0xABCDEF",
+	}
+	for _, s := range hexStrings {
+		if utils.RemoveHexPrefix(s) != s[2:] {
+			t.Errorf("Expected %s but got %s", s[2:], utils.RemoveHexPrefix(s))
+		}
+	}
+
+	nonHexStrings := []string{
+		"123456",
+		"abcdef",
+		"ABCDEF",
+	}
+	for _, s := range nonHexStrings {
+		if utils.RemoveHexPrefix(s) != s {
+			t.Errorf("Expected %s but got %s", s, utils.RemoveHexPrefix(s))
+		}
+	}
+}
+
+func TestIsHex(t *testing.T) {
+	hexStrings := []string{
+		"0x123456",
+		"0xabcdef",
+		"0xABCDEF",
+		"0x1234567890abcdefABCDEF",
+	}
+	for _, s := range hexStrings {
+		if !utils.IsHex(s) {
+			t.Errorf("Expected true but got false for %s", s)
+		}
+	}
+
+	nonHexStrings := []string{
+		"0x12345p",
+		"0xabkcdef",
+		"0xABHDEF",
+		"0x1234567890aGbcdefABCDEF",
+	}
+	for _, s := range nonHexStrings {
+		if utils.IsHex(s) {
+			t.Errorf("Expected false but got true for %s", s)
+		}
+	}
+}
+
 func TestEncodeShortString(t *testing.T) {
 	shortStrings := []string{
 		"hello",
@@ -432,6 +482,57 @@ func TestEncodeShortString(t *testing.T) {
 		}
 		if encoded.String() != expected[i] {
 			t.Errorf("Expected %s but got %s", expected[i], encoded)
+		}
+	}
+}
+
+func TestIsDecimalString(t *testing.T) {
+	decimalStrings := []string{
+		"123456",
+		"7890",
+		"1234567890",
+	}
+	for _, s := range decimalStrings {
+		if !utils.IsDecimalString(s) {
+			t.Errorf("Expected true but got false for %s", s)
+		}
+	}
+
+	nonDecimalStrings := []string{
+		"0x123456",
+		"0xabcdef",
+		"0xABCDEF",
+		"0x1234567890abcdefABCDEF",
+	}
+	for _, s := range nonDecimalStrings {
+		if utils.IsDecimalString(s) {
+			t.Errorf("Expected false but got true for %s", s)
+		}
+	}
+}
+
+func TestDecodeShortString(t *testing.T) {
+	encodedShortStrings := []string{
+		"0x68656c6c6f",
+		"0x776f726c64",
+		"0x313233343536",
+		"0x21402324255e",
+		"0x7572692f706963742f7433382e6a7067",
+	}
+	expected := []string{
+		"hello",
+		"world",
+		"123456",
+		"!@#$%^",
+		"uri/pict/t38.jpg",
+	}
+	for i, s := range encodedShortStrings {
+		decoded, err := utils.DecodeShortString(s)
+		if err != nil {
+			t.Errorf("Failed to decode short string %s: %s", s, err)
+		}
+		if decoded != expected[i] {
+			t.Errorf("Expected %s but got %s", expected[i], decoded)
 		}
 	}
 }
