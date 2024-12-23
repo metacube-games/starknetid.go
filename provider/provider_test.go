@@ -466,3 +466,56 @@ func TestGetProfileData(t *testing.T) {
 		)
 	}
 }
+
+func TestGetStarkProfiles(t *testing.T) {
+	p, err := createProvider()
+	if err != nil {
+		t.Error(err)
+	}
+
+	starkProfiles, err := p.GetStarkProfiles(
+		context.Background(),
+		[]string{BASTVRE_ADDRESS, METACUBE_ADDRESS, FRICOBEN_ADDRESS},
+		true,
+		nil,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(starkProfiles) != 3 {
+		t.Errorf("Expected 3 but got %d", len(starkProfiles))
+	}
+	if starkProfiles[0].Name != BASTVRE_DOMAIN {
+		t.Errorf("Expected %s but got %s", BASTVRE_DOMAIN, starkProfiles[0].Name)
+	}
+	if starkProfiles[0].Id != 656497159640 {
+		t.Errorf("Expected 656497159640 but got %d", starkProfiles[0].Id)
+	}
+	if starkProfiles[0].ProfilePicture != nil {
+		t.Errorf("Expected nil but got %s", *starkProfiles[0].ProfilePicture)
+	}
+	if starkProfiles[1].Name != METACUBE_DOMAIN {
+		t.Errorf("Expected %s but got %s", METACUBE_DOMAIN, starkProfiles[1].Name)
+	}
+	if starkProfiles[1].Id != 899148099505 {
+		t.Errorf("Expected 899148099505 but got %d", starkProfiles[1].Id)
+	}
+	if starkProfiles[1].ProfilePicture != nil {
+		t.Errorf("Expected nil but got %s", *starkProfiles[1].ProfilePicture)
+	}
+	if starkProfiles[2].Name != FRICOBEN_DOMAIN {
+		t.Errorf("Expected %s but got %s", FRICOBEN_DOMAIN, starkProfiles[2].Name)
+	}
+	if starkProfiles[2].Id != 8 {
+		t.Errorf("Expected 8 but got %d", starkProfiles[2].Id)
+	}
+	if starkProfiles[2].ProfilePicture == nil {
+		t.Error("Expected profile picture but got nil")
+	}
+	if *starkProfiles[2].ProfilePicture != "https://img.starkurabu.com/41584010289889200780326579696828426.png" {
+		t.Errorf(
+			"Expected https://img.starkurabu.com/41584010289889200780326579696828426.png but got %s",
+			*starkProfiles[2].ProfilePicture,
+		)
+	}
+}
