@@ -10,6 +10,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      RPC_URL: ${{ secrets.RPC_URL }}
     steps:
     - uses: actions/checkout@v4
 

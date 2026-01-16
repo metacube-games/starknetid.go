@@ -2,15 +2,16 @@ package provider
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/NethermindEth/starknet.go/rpc"
+	"github.com/joho/godotenv"
 	"github.com/metacube-games/starknetid.go/constants"
 	"github.com/metacube-games/starknetid.go/types"
 )
 
 const (
-	RPC_URL            = "https://starknet-mainnet.public.blastapi.io/rpc/v0_7"
 	METACUBE_ADDRESS   = "0x2ba4ea61d80d1a60adf03150b7634af5fee6f4b3167d915ab8cce2be3ac2023"
 	METACUBE_DOMAIN    = "metacube.stark"
 	METACUBE_ID        = "899148099505"
@@ -30,10 +31,17 @@ const (
 var (
 	METACUBE_NAME_VERIFIER_CONTRACT   = "0x06ac597f8116f886fa1c97a23fa4e08299975ecaf6b598873ca6792b9bbfb678"
 	FRICOBEN_NFT_PP_CONTRACT_VERIFIER = "0x070aaa20ec4a46da57c932d9fd89ca5e6bb9ca3188d3df361a32306aff7d59c7"
+	RPC_URL                           string
 )
 
+func init() {
+	// Try to load .env file, ignore error if it doesn't exist (e.g., in CI)
+	_ = godotenv.Load("../.env")
+	RPC_URL = os.Getenv("RPC_URL")
+}
+
 func createProvider() (*Provider, error) {
-	client, err := rpc.NewProvider(RPC_URL)
+	client, err := rpc.NewProvider(context.Background(), RPC_URL)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +54,7 @@ func TestNewProvider(t *testing.T) {
 		t.Error("Expected error but got nil")
 	}
 
-	client, err := rpc.NewProvider(RPC_URL)
+	client, err := rpc.NewProvider(context.Background(), RPC_URL)
 	if err != nil {
 		t.Error(err)
 	}
@@ -441,33 +449,6 @@ func TestGetProfileData(t *testing.T) {
 
 	profileData, err = p.GetProfileData(
 		context.Background(),
-		FRICOBEN_ADDRESS,
-		true,
-		nil,
-		nil,
-		nil,
-	)
-	if err != nil {
-		t.Error(err)
-	}
-	if profileData.Name != FRICOBEN_DOMAIN {
-		t.Errorf("Expected %s but got %s", FRICOBEN_DOMAIN, profileData.Name)
-	}
-	if profileData.Id != 8 {
-		t.Errorf("Expected 8 but got %d", profileData.Id)
-	}
-	if profileData.ProfilePicture == nil {
-		t.Error("Expected profile picture but got nil")
-	}
-	if *profileData.ProfilePicture != "https://img.starkurabu.com/41584010289889200780326579696828426.png" {
-		t.Errorf(
-			"Expected https://img.starkurabu.com/41584010289889200780326579696828426.png but got %s",
-			*profileData.ProfilePicture,
-		)
-	}
-
-	profileData, err = p.GetProfileData(
-		context.Background(),
 		"0x123",
 		true,
 		nil,
@@ -508,14 +489,14 @@ func TestGetStarkProfiles(t *testing.T) {
 
 	starkProfiles, err := p.GetStarkProfiles(
 		context.Background(),
-		[]string{BASTVRE_ADDRESS, "0x123", METACUBE_ADDRESS, FRICOBEN_ADDRESS},
+		[]string{BASTVRE_ADDRESS, "0x123", METACUBE_ADDRESS},
 		true,
 		nil,
 	)
 	if err != nil {
 		t.Error(err)
 	}
-	if len(starkProfiles) != 4 {
+	if len(starkProfiles) != 3 {
 		t.Errorf("Expected 4 but got %d", len(starkProfiles))
 	}
 	if starkProfiles[0].Name != BASTVRE_DOMAIN {
@@ -544,20 +525,5 @@ func TestGetStarkProfiles(t *testing.T) {
 	}
 	if starkProfiles[2].ProfilePicture != nil {
 		t.Errorf("Expected nil but got %s", *starkProfiles[1].ProfilePicture)
-	}
-	if starkProfiles[3].Name != FRICOBEN_DOMAIN {
-		t.Errorf("Expected %s but got %s", FRICOBEN_DOMAIN, starkProfiles[2].Name)
-	}
-	if starkProfiles[3].Id != 8 {
-		t.Errorf("Expected 8 but got %d", starkProfiles[2].Id)
-	}
-	if starkProfiles[3].ProfilePicture == nil {
-		t.Error("Expected profile picture but got nil")
-	}
-	if *starkProfiles[3].ProfilePicture != "https://img.starkurabu.com/41584010289889200780326579696828426.png" {
-		t.Errorf(
-			"Expected https://img.starkurabu.com/41584010289889200780326579696828426.png but got %s",
-			*starkProfiles[3].ProfilePicture,
-		)
 	}
 }

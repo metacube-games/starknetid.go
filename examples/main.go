@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	RPC_URL          = "https://starknet-mainnet.public.blastapi.io/rpc/v0_7"
+	RPC_URL          = "YOUR_RPC_URL_HERE"
 	METACUBE_ADDRESS = "0x2ba4ea61d80d1a60adf03150b7634af5fee6f4b3167d915ab8cce2be3ac2023"
 	METACUBE_DOMAIN  = "metacube.stark"
 	METACUBE_ID      = "899148099505"
@@ -27,7 +27,7 @@ var (
 
 func main() {
 	// Step 1: Create a new RPC provider client
-	client, err := rpc.NewProvider(RPC_URL)
+	client, err := rpc.NewProvider(context.Background(), RPC_URL)
 	if err != nil {
 		panic(err)
 	}
@@ -182,7 +182,7 @@ func main() {
 	// Get Stark profile from the address
 	starkProfile, err := provider.GetProfileData(
 		context.Background(),
-		FRICOBEN_ADDRESS,
+		METACUBE_ADDRESS,
 		true,
 		nil,
 		nil,
@@ -196,7 +196,7 @@ func main() {
 	// Get Stark profile of multiple addresses
 	starkProfiles, err := provider.GetStarkProfiles(
 		context.Background(),
-		[]string{METACUBE_ADDRESS, FRICOBEN_ADDRESS},
+		[]string{METACUBE_ADDRESS, METACUBE_ADDRESS},
 		true,
 		nil,
 	)
