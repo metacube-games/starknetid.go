@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/NethermindEth/starknet.go v0.17.1
-	github.com/metacube-games/starknetid.go v1.0.0
+	github.com/metacube-games/starknetid.go v1.1.0
 )
 
 require (
