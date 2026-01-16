@@ -40,7 +40,7 @@ go get github.com/metacube-games/starknetid.go
 
 ```go
 // 1. Create a new RPC provider client
-client, err := rpc.NewProvider(RPC_URL) // github.com/NethermindEth/starknet.go/rpc
+client, err := rpc.NewProvider(context.Background(), RPC_URL) // github.com/NethermindEth/starknet.go/rpc
 if err != nil {
   panic(err)
 }
