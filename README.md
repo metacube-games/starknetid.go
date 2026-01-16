@@ -8,6 +8,9 @@
     <a href="https://github.com/metacube-games/starknetid.go/actions/workflows/go.yml">
         <img src="https://github.com/metacube-games/starknetid.go/actions/workflows/go.yml/badge.svg?branch=main" alt="test">
     </a>
+    <a href="https://goreportcard.com/report/github.com/metacube-games/starknetid.go">
+        <img src="https://goreportcard.com/badge/github.com/metacube-games/starknetid.go" alt="Go Report Card">
+    </a>
     <a href="https://github.com/metacube-games/starknetid.go">
       <img src="https://img.shields.io/github/stars/metacube-games/starknetid.go?style=social"/>
     </a>
